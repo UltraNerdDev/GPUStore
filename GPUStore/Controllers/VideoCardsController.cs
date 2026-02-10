@@ -2,6 +2,7 @@
 using GPUStore.Models;
 using GPUStore.ViewModels;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -12,33 +13,30 @@ namespace GPUStore.Controllers
     public class VideoCardsController : Controller
     {
         private readonly ApplicationDbContext _context;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public VideoCardsController(ApplicationDbContext context)
+        // Конструкторът вече приема и средата, за да достъпваме wwwroot
+        public VideoCardsController(ApplicationDbContext context, IWebHostEnvironment webHostEnvironment)
         {
             _context = context;
+            _webHostEnvironment = webHostEnvironment;
         }
 
-        // 1. Списък с всички видеокарти (Index)
         public async Task<IActionResult> Index()
         {
-            // Използваме .Include(), за да заредим и името на производителя
             var cards = await _context.VideoCards
                 .Include(v => v.Manufacturer)
-                .Include(v => v.CardTechnologies) // Зареждаме междинната таблица
-                    .ThenInclude(ct => ct.Technology) // Зареждаме самото име на технологията
+                .Include(v => v.CardTechnologies)
+                    .ThenInclude(ct => ct.Technology)
                 .ToListAsync();
             return View(cards);
         }
 
-        // 2. Форма за създаване (GET)
         public IActionResult Create()
         {
             var viewModel = new VideoCardCreateViewModel
             {
-                // Пълним падащото меню с производители
                 Manufacturers = new SelectList(_context.Manufacturers, "Id", "Name"),
-
-                // Превръщаме всички технологии от базата в списък с чекбоксове
                 AvailableTechnologies = _context.Technologies.Select(t => new TechnologySelection
                 {
                     TechnologyId = t.Id,
@@ -50,29 +48,50 @@ namespace GPUStore.Controllers
             return View(viewModel);
         }
 
-        // 3. Записване на видеокартата (POST)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(VideoCardCreateViewModel model)
         {
-            // Махаме валидацията за навигационните свойства, които не идват от формата
+            // Премахваме навигационните свойства от валидацията
             ModelState.Remove("VideoCard.Manufacturer");
             ModelState.Remove("VideoCard.CardTechnologies");
 
             if (ModelState.IsValid)
             {
-                // Стъпка А: Записваме основната карта
+                // 1. ЛОГИКА ЗА КАЧВАНЕ НА СНИМКА
+                if (model.ImageFile != null)
+                {
+                    // Намираме пътя до wwwroot/images
+                    string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images");
+
+                    // Създаваме уникално име: GUID + името на файла
+                    string uniqueFileName = Guid.NewGuid().ToString() + "_" + model.ImageFile.FileName;
+
+                    // Пълният път до мястото, където ще се запише файла
+                    string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                    // Записваме файла на диска
+                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await model.ImageFile.CopyToAsync(fileStream);
+                    }
+
+                    // Записваме САМО името на файла в базата данни
+                    model.VideoCard.ImageUrl = uniqueFileName;
+                }
+
+                // 2. ЗАПИС НА ВИДЕОКАРТАТА
                 _context.VideoCards.Add(model.VideoCard);
                 await _context.SaveChangesAsync();
 
-                // Стъпка Б: Записваме избраните технологии в свързващата таблица
+                // 3. ЗАПИС НА ТЕХНОЛОГИИТЕ (Много-към-Много)
                 if (model.AvailableTechnologies != null)
                 {
                     foreach (var tech in model.AvailableTechnologies.Where(t => t.IsSelected))
                     {
                         var cardTech = new CardTechnology
                         {
-                            VideoCardId = model.VideoCard.Id, // Вече има Id след SaveChanges
+                            VideoCardId = model.VideoCard.Id,
                             TechnologyId = tech.TechnologyId
                         };
                         _context.CardTechnologies.Add(cardTech);
@@ -83,8 +102,15 @@ namespace GPUStore.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // Ако моделът не е валиден, презареждаме данните за формата
+            // Ако моделът не е валиден, презареждаме списъците
             model.Manufacturers = new SelectList(_context.Manufacturers, "Id", "Name", model.VideoCard.ManufacturerId);
+            model.AvailableTechnologies = _context.Technologies.Select(t => new TechnologySelection
+            {
+                TechnologyId = t.Id,
+                Name = t.Name,
+                IsSelected = false
+            }).ToList();
+
             return View(model);
         }
 
@@ -156,7 +182,6 @@ namespace GPUStore.Controllers
         {
             if (id != model.VideoCard.Id) return NotFound();
 
-            // Махаме валидацията за обекти, които не идват от формата
             ModelState.Remove("VideoCard.Manufacturer");
             ModelState.Remove("VideoCard.CardTechnologies");
 
@@ -164,24 +189,55 @@ namespace GPUStore.Controllers
             {
                 try
                 {
-                    // 1. Обновяваме основната информация
+                    // 1. ОБРАБОТКА НА СНИМКАТА
+                    if (model.ImageFile != null)
+                    {
+                        // Път до папката
+                        string uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "images");
+
+                        // ИЗТРИВАНЕ НА СТАРАТА СНИМКА (ако съществува)
+                        // Първо трябва да вземем името на старата снимка без проследяване (AsNoTracking)
+                        var oldCard = await _context.VideoCards.AsNoTracking().FirstOrDefaultAsync(v => v.Id == id);
+                        if (oldCard != null && !string.IsNullOrEmpty(oldCard.ImageUrl))
+                        {
+                            string oldFilePath = Path.Combine(uploadsFolder, oldCard.ImageUrl);
+                            if (System.IO.File.Exists(oldFilePath))
+                            {
+                                System.IO.File.Delete(oldFilePath);
+                            }
+                        }
+
+                        // ЗАПИС НА НОВАТА СНИМКА
+                        string uniqueFileName = Guid.NewGuid().ToString() + "_" + model.ImageFile.FileName;
+                        string newFilePath = Path.Combine(uploadsFolder, uniqueFileName);
+
+                        using (var fileStream = new FileStream(newFilePath, FileMode.Create))
+                        {
+                            await model.ImageFile.CopyToAsync(fileStream);
+                        }
+                        model.VideoCard.ImageUrl = uniqueFileName;
+                    }
+                    else
+                    {
+                        // Ако не е качен нов файл, запазваме стария ImageUrl
+                        // Трябва да вземем стойността от базата, защото формата не я изпраща автоматично
+                        var currentCard = await _context.VideoCards.AsNoTracking().FirstOrDefaultAsync(v => v.Id == id);
+                        model.VideoCard.ImageUrl = currentCard?.ImageUrl;
+                    }
+
+                    // 2. ОБНОВЯВАНЕ НА КАРТАТА
                     _context.Update(model.VideoCard);
 
-                    // 2. Изтриваме старите връзки с технологии за тази карта
+                    // 3. ТЕХНОЛОГИИ (Изтриваме и добавяме наново)
                     var oldLinks = _context.CardTechnologies.Where(ct => ct.VideoCardId == id);
                     _context.CardTechnologies.RemoveRange(oldLinks);
                     await _context.SaveChangesAsync();
 
-                    // 3. Добавяме новите избрани технологии
                     if (model.AvailableTechnologies != null)
                     {
                         foreach (var tech in model.AvailableTechnologies.Where(t => t.IsSelected))
                         {
-                            _context.CardTechnologies.Add(new CardTechnology
-                            {
-                                VideoCardId = id,
-                                TechnologyId = tech.TechnologyId
-                            });
+                            _context.CardTechnologies.Add(new CardTechnology { VideoCardId = id, TechnologyId = tech.TechnologyId });
                         }
                         await _context.SaveChangesAsync();
                     }
@@ -194,7 +250,6 @@ namespace GPUStore.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // Ако има грешка, презареждаме падащото меню
             model.Manufacturers = new SelectList(_context.Manufacturers, "Id", "Name", model.VideoCard.ManufacturerId);
             return View(model);
         }

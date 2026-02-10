@@ -1,36 +1,76 @@
 ﻿@model GPUStore.ViewModels.VideoCardCreateViewModel
 
-<h1>Добави Видеокарта</h1>
+<div class="container">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow mt-4">
+                <div class="card-header bg-dark text-white">
+                    <h2 class="mb-0">Добави Нова Видеокарта</h2>
+                </div>
+                <div class="card-body">
+                    @* ВАЖНО: enctype е задължителен за качване на файлове *@
+                    <form asp-action="Create" method="post" enctype="multipart/form-data">
+                        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-<form asp-action="Create" method="post">
-    <div class="form-group">
-        <label>Модел име</label>
-        <input asp-for="VideoCard.ModelName" class="form-control" />
-    </div>
+                        <div class="form-group mb-3">
+                            <label class="control-label fw-bold">Модел име</label>
+                            <input asp-for="VideoCard.ModelName" class="form-control" placeholder="напр. GeForce RTX 4090" />
+                            <span asp-validation-for="VideoCard.ModelName" class="text-danger"></span>
+                        </div>
 
-    <div class="form-group">
-        <label>Производител</label>
-        <select asp-for="VideoCard.ManufacturerId" asp-items="Model.Manufacturers" class="form-control">
-            <option value="">-- Избери производител --</option>
-        </select>
-    </div>
+                        <div class="form-group mb-3">
+                            <label class="control-label fw-bold">Производител</label>
+                            <select asp-for="VideoCard.ManufacturerId" asp-items="Model.Manufacturers" class="form-control">
+                                <option value="">-- Избери производител --</option>
+                            </select>
+                            <span asp-validation-for="VideoCard.ManufacturerId" class="text-danger"></span>
+                        </div>
 
-    <div class="form-group">
-        <label>Цена</label>
-        <input asp-for="VideoCard.Price" class="form-control" type="number" step="0.01" />
-    </div>
+                        <div class="form-group mb-3">
+                            <label class="control-label fw-bold">Цена</label>
+                            <div class="input-group">
+                                <span class="input-group-text">лв.</span>
+                                <input asp-for="VideoCard.Price" class="form-control" type="number" step="0.01" />
+                            </div>
+                            <span asp-validation-for="VideoCard.Price" class="text-danger"></span>
+                        </div>
 
-    <hr />
-    <h4>Технологии</h4>
-    @for (int i = 0; i < Model.AvailableTechnologies.Count; i++)
-    {
-            <div class="form-check">
-                <input type="hidden" asp-for="@Model.AvailableTechnologies[i].TechnologyId" />
-                <input type="hidden" asp-for="@Model.AvailableTechnologies[i].Name" />
-                <input asp-for="@Model.AvailableTechnologies[i].IsSelected" class="form-check-input" type="checkbox" />
-                <label class="form-check-label">@Model.AvailableTechnologies[i].Name</label>
+                        @* НОВО: Поле за качване на снимка *@
+                        <div class="form-group mb-4">
+                            <label class="control-label fw-bold">Снимка на продукта</label>
+                            <input asp-for="ImageFile" type="file" class="form-control" accept="image/*" />
+                            <small class="text-muted">Препоръчителен формат: .jpg, .png</small>
+                        </div>
+
+                        <hr />
+                        <h4 class="mb-3">Технологии</h4>
+                        <div class="row mb-4">
+                            @for (int i = 0; i < Model.AvailableTechnologies.Count; i++)
+                            {
+                                <div class="col-md-4 mb-2">
+                                    <div class="form-check card p-2 border-light shadow-sm">
+                                        <input type="hidden" asp-for="@Model.AvailableTechnologies[i].TechnologyId" />
+                                        <input type="hidden" asp-for="@Model.AvailableTechnologies[i].Name" />
+                                        <input asp-for="@Model.AvailableTechnologies[i].IsSelected" class="form-check-input ms-1" type="checkbox" />
+                                        <label class="form-check-label ms-4">@Model.AvailableTechnologies[i].Name</label>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">Запази Видеокартата</button>
+                            <a asp-action="Index" class="btn btn-outline-secondary">Назад към списъка</a>
+                        </div>
+                    </form>
+                </div>
             </div>
-    }
+        </div>
+    </div>
+</div>
 
-    <button type="submit" class="btn btn-success mt-3">Запази</button>
-</form>
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

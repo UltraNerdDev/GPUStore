@@ -14,6 +14,9 @@ namespace GPUStore.ViewModels
 
         // 3. Списък с технологии и информация дали са отметнати
         public List<TechnologySelection>? AvailableTechnologies { get; set; }
+
+        // 4. Поле за качване на изображение (специален тип IFormFile)
+        public IFormFile? ImageFile { get; set; }
     }
 
     // Помощен клас за чекбоксовете

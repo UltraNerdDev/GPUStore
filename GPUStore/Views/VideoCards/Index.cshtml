@@ -9,6 +9,7 @@
     <table class="table table-hover shadow-sm">
         <thead class="thead-dark">
             <tr>
+                <th>Икона</th>
                 <th>Модел</th>
                 <th>Производител</th>
                 <th>Технологии</th> @* Нова колона *@
@@ -20,6 +21,13 @@
             @foreach (var item in Model)
             {
                 <tr>
+                    <td>
+                        @if (!string.IsNullOrEmpty(item.ImageUrl))
+                        {
+                            <img src="~/images/@item.ImageUrl" alt="GPU" style="width: 50px; height: auto; margin-right: 10px;" class="img-thumbnail" />
+                        }
+                        <strong>@item.ModelName</strong>
+                    </td>
                     <td>
                         <strong>@item.ModelName</strong>
                     </td>
