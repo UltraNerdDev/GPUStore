@@ -1,0 +1,7 @@
+﻿@model GPUStore.Models.VideoCard
+<h3>Сигурни ли сте, че искате да изтриете @Model.ModelName?</h3>
+<form asp-action="Delete">
+    <input type="hidden" asp-for="Id" />
+    <input type="submit" value="Изтрий" class="btn btn-danger" />
+    <a asp-action="Index" class="btn btn-secondary">Отказ</a>
+</form>

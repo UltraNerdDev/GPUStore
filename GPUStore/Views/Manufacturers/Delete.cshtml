@@ -1,0 +1,16 @@
+﻿@model GPUStore.Models.Manufacturer
+
+<div class="container mt-5">
+    <div class="alert alert-danger shadow-sm">
+        <h3>Сигурни ли сте, че искате да изтриете @Model.Name?</h3>
+        <p class="text-dark">
+            <strong>Внимание:</strong> Изтриването на производител може да повлияе на видеокартите, които са свързани с него.
+        </p>
+        <hr />
+        <form asp-action="Delete">
+            <input type="hidden" asp-for="Id" />
+            <button type="submit" class="btn btn-danger">Да, изтрий го!</button>
+            <a asp-action="Index" class="btn btn-secondary">Отказ</a>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,59 @@
+﻿@model IEnumerable<GPUStore.Models.VideoCard>
+
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
+        <h1>Списък с Видеокарти (Админ)</h1>
+        <a asp-action="Create" class="btn btn-success">Добави Нова Карта</a>
+    </div>
+
+    <table class="table table-hover shadow-sm">
+        <thead class="thead-dark">
+            <tr>
+                <th>Модел</th>
+                <th>Производител</th>
+                <th>Технологии</th> @* Нова колона *@
+                <th>Цена</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        <strong>@item.ModelName</strong>
+                    </td>
+                    <td>
+                        @item.Manufacturer?.Name
+                    </td>
+                    <td>
+                        @* Обхождаме технологиите на конкретната карта *@
+                        @if (item.CardTechnologies != null && item.CardTechnologies.Any())
+                        {
+                            @foreach (var ct in item.CardTechnologies)
+                            {
+                                <span class="badge bg-info text-dark me-1">@ct.Technology?.Name</span>
+                            }
+                        }
+                        else
+                        {
+                            <span class="text-muted small">Няма</span>
+                        }
+                    </td>
+                    <td>
+                        @item.Price.ToString("C2")
+                    </td>
+                    <td>
+                        <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Редактирай</a>
+                        <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Изтрий</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">Все още няма добавени видеокарти.</div>
+    }
+</div>

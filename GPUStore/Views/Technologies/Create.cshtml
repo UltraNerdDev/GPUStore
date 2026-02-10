@@ -1,0 +1,21 @@
+﻿@model GPUStore.Models.Technology
+
+<div class="container">
+    <h1>Добави технология</h1>
+    <hr />
+    <div class="row">
+        <div class="col-md-4">
+            <form asp-action="Create">
+                <div class="form-group mb-3">
+                    <label asp-for="Name" class="control-label">Име (напр. DLSS, Ray Tracing)</label>
+                    <input asp-for="Name" class="form-control" />
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-success">Запази</button>
+                    <a asp-action="Index" class="btn btn-secondary">Назад</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

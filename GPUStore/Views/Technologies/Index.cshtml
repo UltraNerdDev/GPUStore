@@ -1,0 +1,24 @@
+﻿@model IEnumerable<GPUStore.Models.Technology>
+
+<div class="container">
+    <h1>Налични технологии</h1>
+    <p>
+        <a asp-action="Create" class="btn btn-primary">Добави нова технология</a>
+    </p>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Име на технологията</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.Name</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
