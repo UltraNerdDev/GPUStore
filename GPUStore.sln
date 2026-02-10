@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35931.197 d17.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GPUStore", "GPUStore\GPUStore.csproj", "{49BD880D-4F5E-4D76-8EFA-08023578DE1D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{49BD880D-4F5E-4D76-8EFA-08023578DE1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{49BD880D-4F5E-4D76-8EFA-08023578DE1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{49BD880D-4F5E-4D76-8EFA-08023578DE1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{49BD880D-4F5E-4D76-8EFA-08023578DE1D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E7EC4088-A81E-4B0B-A5C6-52EEA4DC872A}
+	EndGlobalSection
+EndGlobal
