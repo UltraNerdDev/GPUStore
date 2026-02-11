@@ -2,6 +2,7 @@
 using GPUStore.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace GPUStore.Controllers
 {
@@ -40,6 +41,59 @@ namespace GPUStore.Controllers
                 return RedirectToAction(nameof(Index));
             }
             return View(technology);
+        }
+
+        // GET: Technologies/Edit/5
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var technology = await _context.Technologies.FindAsync(id);
+            if (technology == null) return NotFound();
+
+            return View(technology);
+        }
+
+        // POST: Technologies/Edit/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Edit(int id, Technology technology)
+        {
+            if (id != technology.Id) return NotFound();
+
+            if (ModelState.IsValid)
+            {
+                _context.Update(technology);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+            return View(technology);
+        }
+
+        // GET: Technologies/Delete/5
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var technology = await _context.Technologies
+                .FirstOrDefaultAsync(m => m.Id == id);
+            if (technology == null) return NotFound();
+
+            return View(technology);
+        }
+
+        // POST: Technologies/Delete/5
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var technology = await _context.Technologies.FindAsync(id);
+            if (technology != null)
+            {
+                _context.Technologies.Remove(technology);
+                await _context.SaveChangesAsync();
+            }
+            return RedirectToAction(nameof(Index));
         }
     }
 }

@@ -9,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GPUStore.Controllers
 {
-    [Authorize(Roles = "Admin")]
+    [Authorize]
     public class VideoCardsController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -22,6 +22,7 @@ namespace GPUStore.Controllers
             _webHostEnvironment = webHostEnvironment;
         }
 
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Index()
         {
             var cards = await _context.VideoCards
@@ -32,6 +33,7 @@ namespace GPUStore.Controllers
             return View(cards);
         }
 
+        [Authorize(Roles = "Admin")]
         public IActionResult Create()
         {
             var viewModel = new VideoCardCreateViewModel
@@ -48,6 +50,7 @@ namespace GPUStore.Controllers
             return View(viewModel);
         }
 
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(VideoCardCreateViewModel model)
@@ -114,6 +117,7 @@ namespace GPUStore.Controllers
             return View(model);
         }
 
+        [Authorize(Roles = "Admin")]
         // GET: VideoCards/Delete/5
         public async Task<IActionResult> Delete(int? id)
         {
@@ -128,6 +132,7 @@ namespace GPUStore.Controllers
             return View(videoCard);
         }
 
+        [Authorize(Roles = "Admin")]
         // POST: VideoCards/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
@@ -146,6 +151,7 @@ namespace GPUStore.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [Authorize(Roles = "Admin")]
         // Подобреният GET: VideoCards/Edit/5
         public async Task<IActionResult> Edit(int? id)
         {
@@ -175,6 +181,7 @@ namespace GPUStore.Controllers
             return View(viewModel);
         }
 
+        [Authorize(Roles = "Admin")]
         // POST: VideoCards/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -252,6 +259,29 @@ namespace GPUStore.Controllers
 
             model.Manufacturers = new SelectList(_context.Manufacturers, "Id", "Name", model.VideoCard.ManufacturerId);
             return View(model);
+        }
+
+        // Визуализира каталога за клиенти
+        public async Task<IActionResult> UserIndex()
+        {
+            var cards = await _context.VideoCards.Include(v => v.Manufacturer).ToListAsync();
+            return View("UserIndex", cards);
+        }
+
+        // ДОБАВИ ТОВА: Детайли за клиенти
+        public async Task<IActionResult> UserDetails(int? id)
+        {
+            if (id == null) return NotFound();
+
+            var videoCard = await _context.VideoCards
+                .Include(v => v.Manufacturer)
+                .Include(v => v.CardTechnologies)
+                    .ThenInclude(ct => ct.Technology)
+                .FirstOrDefaultAsync(m => m.Id == id);
+
+            if (videoCard == null) return NotFound();
+
+            return View(videoCard); // Увери се, че имаш Views/VideoCards/UserDetails.cshtml
         }
     }
 }

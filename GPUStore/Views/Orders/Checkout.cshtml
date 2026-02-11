@@ -1,0 +1,53 @@
+﻿@model IEnumerable<GPUStore.Models.CartItem>
+
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Потвърждение на поръчката</h4>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Продукт</th>
+                                <th>Количество</th>
+                                <th class="text-end">Сума</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model)
+                            {
+                                <tr>
+                                    <td>@item.VideoCard.ModelName</td>
+                                    <td>@item.Quantity бр.</td>
+                                    <td class="text-end">@((item.Quantity * item.VideoCard.Price).ToString("C2"))</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                    <hr />
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="fw-bold">Общо за плащане:</h5>
+                        <h4 class="text-primary fw-bold">@Model.Sum(i => i.Quantity * i.VideoCard.Price).ToString("C2")</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card shadow-sm border-warning">
+                <div class="card-body">
+                    <h5><i class="bi bi-truck"></i> Доставка</h5>
+                    <p class="text-muted small">В момента работим само с наложен платеж. Плащате при получаване.</p>
+                    <form asp-action="ConfirmOrder" method="post">
+                        <button type="submit" class="btn btn-success btn-lg w-100 mt-3">
+                            <i class="bi bi-check2-circle"></i> ПОТВЪРДИ ПОРЪЧКАТА
+                        </button>
+                    </form>
+                    <a asp-controller="Cart" asp-action="Index" class="btn btn-link w-100 mt-2 text-decoration-none text-muted">Върни се в количката</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

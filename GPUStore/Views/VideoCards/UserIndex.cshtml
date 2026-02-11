@@ -1,0 +1,45 @@
+﻿@model IEnumerable<GPUStore.Models.VideoCard>
+
+<div class="container mt-4">
+    <h1 class="text-center mb-5 fw-bold">Налични Видеокарти</h1>
+
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        @foreach (var item in Model)
+        {
+            <div class="col">
+                <div class="card h-100 shadow-sm border-0 transition-hover">
+                    @if (!string.IsNullOrEmpty(item.ImageUrl))
+                    {
+                        <img src="~/images/@item.ImageUrl" class="card-img-top p-3" alt="@item.ModelName" style="height: 250px; object-fit: contain;">
+                    }
+                    <div class="card-body text-center">
+                        <h5 class="card-title fw-bold">@item.Manufacturer.Name @item.ModelName</h5>
+                        <p class="card-text text-primary fs-4 fw-bold">@item.Price.ToString("C2")</p>
+                    </div>
+                    <div class="card-footer bg-white border-0 pb-3">
+                        <div class="d-grid gap-2">
+                            @* Бутон за детайли *@
+                            <a asp-action="UserDetails" asp-route-id="@item.Id" class="btn btn-outline-dark">Детайли</a>
+
+                            @* Бутон за купуване - праща към Action в CartController (който ще създадем) *@
+                            <form asp-controller="Cart" asp-action="AddToCart" method="post">
+                                <input type="hidden" name="cardId" value="@item.Id" />
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="bi bi-cart-plus"></i> Купи
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .transition-hover:hover {
+        transform: translateY(-5px);
+        transition: 0.3s;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+    }
+</style>

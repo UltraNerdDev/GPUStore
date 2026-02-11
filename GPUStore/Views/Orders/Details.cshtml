@@ -1,0 +1,85 @@
+﻿@model GPUStore.Models.Order
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Детайли за Поръчка #@Model.Id</h2>
+        <a asp-action="Index" class="btn btn-secondary">Назад към списъка</a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Информация</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Клиент:</strong> @(Model.User?.Email ?? "Анонимен")</p>
+                    <p><strong>Дата:</strong> @Model.OrderDate.ToString("dd.MM.yyyy HH:mm")</p>
+                    <p><strong>Обща сума:</strong> <span class="text-success fw-bold">@Model.OrderItems.Sum(oi => oi.Quantity * oi.PriceAtPurchase).ToString("C2")</span></p>
+                    <hr />
+                    <form asp-action="UpdateStatus" method="post">
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <div class="form-group">
+                            <label class="fw-bold mb-1">Статус на поръчката:</label>
+                            <select name="newStatus" class="form-select mb-3">
+                                <option value="Pending" selected="@(Model.Status == "Pending")">Изчакваща</option>
+                                <option value="Processed" selected="@(Model.Status == "Processed")">Обработена</option>
+                                <option value="Shipped" selected="@(Model.Status == "Shipped")">Изпратена</option>
+                                <option value="Cancelled" selected="@(Model.Status == "Cancelled")">Отказана</option>
+                            </select>
+                            <button type="submit" class="btn btn-primary w-100">Обнови статуса</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Поръчани продукти</h5>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Продукт</th>
+                                <th class="text-center">Количество</th>
+                                <th class="text-end">Ед. Цена</th>
+                                <th class="text-end">Общо</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.OrderItems)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            @if (!string.IsNullOrEmpty(item.VideoCard?.ImageUrl))
+                                            {
+                                                <img src="~/images/@item.VideoCard.ImageUrl" class="img-thumbnail me-2" style="width: 50px;" />
+                                            }
+                                            <div>
+                                                <div class="fw-bold">@item.VideoCard?.ModelName</div>
+                                                <small class="text-muted">ID: @item.VideoCardId</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">@item.Quantity бр.</td>
+                                    <td class="text-end">@item.PriceAtPurchase.ToString("C2")</td>
+                                    <td class="text-end fw-bold">@((item.Quantity * item.PriceAtPurchase).ToString("C2"))</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <td colspan="3" class="text-end fw-bold">Крайна сума:</td>
+                                <td class="text-end fw-bold text-primary" style="font-size: 1.2rem;">@Model.OrderItems.Sum(oi => oi.Quantity * oi.PriceAtPurchase).ToString("C2")</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

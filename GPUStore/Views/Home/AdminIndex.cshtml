@@ -1,0 +1,76 @@
+﻿@model GPUStore.ViewModels.AdminDashboardViewModel
+
+<div class="container mt-4">
+    <div class="text-center mb-5">
+        <h1 class="display-4 fw-bold text-dark">GPU Store Management System</h1>
+        <p class="lead text-muted">Вътрешна система за управление на наличности, поръчки и партньори.</p>
+    </div>
+
+    @* Инфо блок за текущия потребител *@
+    <div class="alert alert-light border shadow-sm mb-4">
+        <i class="bi bi-person-circle"></i> Влезли сте като: <strong>@User.Identity.Name</strong>
+        <span class="mx-2">|</span>
+        Роля: <span class="badge bg-primary">Admin</span>
+    </div>
+
+    @* СТАТИСТИКА (Кутийките) *@
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100 text-center p-3">
+                <div class="card-body">
+                    <h5 class="text-muted mb-3">Видеокарти</h5>
+                    <div class="display-5 fw-bold text-primary">@Model.TotalVideoCards</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100 text-center p-3">
+                <div class="card-body">
+                    <h5 class="text-muted mb-3">Поръчки</h5>
+                    <div class="display-5 fw-bold text-success">@Model.TotalOrders</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100 text-center p-3">
+                <div class="card-body">
+                    <h5 class="text-muted mb-3">Производители</h5>
+                    <div class="display-5 fw-bold text-info">@Model.TotalManufacturers</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card shadow-sm border-0 h-100 text-center p-3">
+                <div class="card-body">
+                    <h5 class="text-muted mb-3">Общ оборот</h5>
+                    <div class="display-6 fw-bold text-dark">@Model.TotalRevenue.ToString("C0")</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* БЪРЗИ ДЕЙСТВИЯ *@
+    <h4 class="mb-4">Бързи действия</h4>
+    <div class="row g-3">
+        <div class="col-md-3">
+            <a asp-controller="VideoCards" asp-action="Create" class="btn btn-outline-primary w-100 p-3 shadow-sm">
+                <i class="bi bi-plus-circle d-block mb-2 fs-4"></i> Добави карта
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a asp-controller="Orders" asp-action="Index" class="btn btn-outline-success w-100 p-3 shadow-sm">
+                <i class="bi bi-list-check d-block mb-2 fs-4"></i> Списък поръчки
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a asp-controller="Manufacturers" asp-action="Index" class="btn btn-outline-info w-100 p-3 shadow-sm">
+                <i class="bi bi-building d-block mb-2 fs-4"></i> Производители
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a asp-controller="Technologies" asp-action="Index" class="btn btn-outline-secondary w-100 p-3 shadow-sm">
+                <i class="bi bi-cpu d-block mb-2 fs-4"></i> Технологии
+            </a>
+        </div>
+    </div>
+</div>

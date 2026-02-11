@@ -1,0 +1,60 @@
+﻿@model IEnumerable<GPUStore.Models.CartItem>
+
+<div class="container mt-4">
+    <h2 class="mb-4"><i class="bi bi-cart3"></i> Вашата количка</h2>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">Количката ви е празна. <a href="/VideoCards/UserIndex">Към каталога!</a></div>
+    }
+    else
+    {
+        <div class="table-responsive shadow-sm rounded">
+            <table class="table align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Продукт</th>
+                        <th>Цена</th>
+                        <th>Количество</th>
+                        <th>Общо</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <img src="~/images/@item.VideoCard.ImageUrl" style="width: 60px;" class="me-3" />
+                                    <span class="fw-bold">@item.VideoCard.ModelName</span>
+                                </div>
+                            </td>
+                            <td>@item.VideoCard.Price.ToString("C2")</td>
+                            <td>@item.Quantity бр.</td>
+                            <td class="fw-bold">@((item.Quantity * item.VideoCard.Price).ToString("C2"))</td>
+                            <td class="text-end">
+                                <a asp-action="Remove" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot class="table-light">
+                    <tr>
+                        <td colspan="3" class="text-end fw-bold fs-5">Обща сума:</td>
+                        <td colspan="2" class="fw-bold fs-5 text-primary">
+                            @Model.Sum(i => i.Quantity * i.VideoCard.Price).ToString("C2")
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="d-flex justify-content-between mt-4">
+            <a href="/VideoCards/UserIndex" class="btn btn-outline-secondary">Продължи пазаруването</a>
+            <a asp-controller="Orders" asp-action="Checkout" class="btn btn-success btn-lg px-5">Завърши поръчката</a>
+        </div>
+    }
+</div>
