@@ -5,7 +5,7 @@
 namespace GPUStore.Migrations
 {
     /// <inheritdoc />
-    public partial class blop : Migration
+    public partial class Blop : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
