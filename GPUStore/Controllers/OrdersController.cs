@@ -196,5 +196,26 @@ namespace GPUStore.Controllers
             // 5. Препращаме към страница за успех
             return View("Success", order.Id);
         }
+
+        [Authorize]
+        public async Task<IActionResult> MyOrders()
+        {
+            // ЗАЩИТА: Ако е админ, го пращаме към списъка за управление на всички поръчки
+            if (User.IsInRole("Admin"))
+            {
+                return RedirectToAction(nameof(Index));
+            }
+
+            // Вземаме ID-то на текущия потребител
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // Извличаме само неговите поръчки, подредени от най-новите към най-старите
+            var orders = await _context.Orders
+                .Where(o => o.UserId == userId)
+                .OrderByDescending(o => o.OrderDate)
+                .ToListAsync();
+
+            return View(orders);
+        }
     }
 }

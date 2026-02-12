@@ -39,7 +39,11 @@
                         }
                         @if (!User.IsInRole("Admin") && User.Identity.IsAuthenticated)
                         {
-                            @* Показваме количката само на логнати *@
+                            @* ТОВА СЕ ВИЖДА САМО ОТ КЛИЕНТИ *@
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" asp-controller="Orders" asp-action="MyOrders">Моите поръчки</a>
+                            </li>
+
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="Cart" asp-action="Index">
                                     <i class="bi bi-cart3"></i> Количка
