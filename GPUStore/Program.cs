@@ -16,8 +16,8 @@ namespace GPUStore
 
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
-            // КОРИГИРАНО: Добавихме .AddRoles<IdentityRole>()
-            builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = false) // Сложи го на false за тестовете
+            // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ .AddRoles<IdentityRole>()
+            builder.Services.AddDefaultIdentity<IdentityUser>(options => options.SignIn.RequireConfirmedAccount = false) // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅ false пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
                 .AddRoles<IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>();
 
@@ -38,7 +38,7 @@ namespace GPUStore
             app.UseHttpsRedirection();
             app.UseRouting();
 
-            // КОРИГИРАНО: Трябва да има първо Authentication, после Authorization
+            // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ Authentication, пїЅпїЅпїЅпїЅпїЅ Authorization
             app.UseAuthentication();
             app.UseAuthorization();
 
@@ -50,13 +50,13 @@ namespace GPUStore
             app.MapRazorPages()
                .WithStaticAssets();
 
-            // SEEDING ЛОГИКА
+            // SEEDING пїЅпїЅпїЅпїЅпїЅпїЅ
             using (var scope = app.Services.CreateScope())
             {
                 var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
                 var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
 
-                // 1. Създаване на роли
+                // 1. пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅ
                 string[] roleNames = { "Admin", "Customer" };
                 foreach (var roleName in roleNames)
                 {
@@ -66,13 +66,13 @@ namespace GPUStore
                     }
                 }
 
-                // 2. Създаване на първия Админ
+                // 2. пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
                 var adminEmail = "admin@gpustore.com";
                 var adminUser = await userManager.FindByEmailAsync(adminEmail);
                 if (adminUser == null)
                 {
                     var user = new IdentityUser { UserName = adminEmail, Email = adminEmail, EmailConfirmed = true };
-                    await userManager.CreateAsync(user, "Admin123!"); // Паролата трябва да има главна буква, цифра и знак
+                    await userManager.CreateAsync(user, "Admin123!"); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ
                     await userManager.AddToRoleAsync(user, "Admin");
                 }
             }
