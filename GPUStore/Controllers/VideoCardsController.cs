@@ -263,10 +263,37 @@ namespace GPUStore.Controllers
         }
 
         // Визуализира каталога за клиенти
-        public async Task<IActionResult> UserIndex()
+        //public async Task<IActionResult> UserIndex()
+        //{
+        //    var cards = await _context.VideoCards.Include(v => v.Manufacturer).ToListAsync();
+        //    return View("UserIndex", cards);
+        //}
+        public async Task<IActionResult> UserIndex(string searchTerm, int? manufacturerId)
         {
-            var cards = await _context.VideoCards.Include(v => v.Manufacturer).ToListAsync();
-            return View("UserIndex", cards);
+            // Започваме с базовата заявка
+            var query = _context.VideoCards
+                .Include(v => v.Manufacturer)
+                .AsQueryable();
+
+            // Филтър по име (търсачка)
+            if (!string.IsNullOrWhiteSpace(searchTerm))
+            {
+                query = query.Where(v => v.ModelName.Contains(searchTerm));
+            }
+
+            // Филтър по производител
+            if (manufacturerId.HasValue)
+            {
+                query = query.Where(v => v.ManufacturerId == manufacturerId.Value);
+            }
+
+            // Вземаме списъка с производители за падащото меню
+            ViewBag.Manufacturers = await _context.Manufacturers.ToListAsync();
+            ViewBag.CurrentSearch = searchTerm;
+            ViewBag.CurrentManufacturer = manufacturerId;
+
+            var results = await query.ToListAsync();
+            return View(results);
         }
 
         // ДОБАВИ ТОВА: Детайли за клиенти
