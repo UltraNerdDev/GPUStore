@@ -20,6 +20,8 @@ namespace GPUStore.Models
 
         public string? ImageUrl { get; set; }
 
+        public string? Description { get; set; } 
+
         public virtual ICollection<CardTechnology> CardTechnologies { get; set; } = new List<CardTechnology>();
         public virtual ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
     }

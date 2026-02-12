@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace GPUStore.Controllers
 {
@@ -275,13 +276,48 @@ namespace GPUStore.Controllers
 
             var videoCard = await _context.VideoCards
                 .Include(v => v.Manufacturer)
-                .Include(v => v.CardTechnologies)
-                    .ThenInclude(ct => ct.Technology)
+                .Include(v => v.CardTechnologies).ThenInclude(ct => ct.Technology)
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (videoCard == null) return NotFound();
 
-            return View(videoCard); // Увери се, че имаш Views/VideoCards/UserDetails.cshtml
+            // Вземаме коментарите за тази карта
+            var comments = await _context.Comments
+                .Include(c => c.User)
+                .Where(c => c.VideoCardId == id)
+                .OrderByDescending(c => c.CreatedAt)
+                .ToListAsync();
+
+            var viewModel = new VideoCardDetailsViewModel
+            {
+                VideoCard = videoCard,
+                Comments = comments
+            };
+
+            return View(viewModel); // Увери се, че имаш Views/VideoCards/UserDetails.cshtml
+        }
+
+        public async Task<IActionResult> AddComment(int cardId, string content)
+        {
+            // Проверка: Админите не могат да пишат коментари
+            if (User.IsInRole("Admin")) return Forbid();
+
+            if (string.IsNullOrWhiteSpace(content)) return RedirectToAction("UserDetails", new { id = cardId });
+
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var comment = new Comment
+            {
+                Content = content,
+                VideoCardId = cardId,
+                UserId = userId,
+                CreatedAt = DateTime.Now
+            };
+
+            _context.Comments.Add(comment);
+            await _context.SaveChangesAsync();
+
+            return RedirectToAction("UserDetails", new { id = cardId });
         }
     }
 }

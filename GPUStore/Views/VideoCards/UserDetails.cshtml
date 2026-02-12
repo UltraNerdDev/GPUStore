@@ -1,0 +1,150 @@
+﻿@model GPUStore.ViewModels.VideoCardDetailsViewModel
+
+<div class="container mt-5 mb-5 pb-5">
+    @* Добавих mb-5 и pb-5 за разстояние *@
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-action="UserIndex" class="text-decoration-none text-primary">Каталог</a></li>
+            <li class="breadcrumb-item active">@Model.VideoCard.ModelName</li>
+        </ol>
+    </nav>
+
+    <div class="row bg-white shadow-sm rounded-4 overflow-hidden border">
+        <div class="col-md-6 p-5 border-end d-flex align-items-center justify-content-center bg-light">
+            <img src="~/images/@Model.VideoCard.ImageUrl" class="img-fluid rounded shadow-sm" style="max-height: 450px;" alt="@Model.VideoCard.ModelName">
+        </div>
+
+        <div class="col-md-6 p-5">
+            <span class="badge bg-primary mb-2">@Model.VideoCard.Manufacturer.Name</span>
+            <h1 class="display-5 fw-bold text-dark">@Model.VideoCard.ModelName</h1>
+
+            <div class="d-flex align-items-center my-4">
+                <h2 class="text-primary fw-bold mb-0 me-3">@Model.VideoCard.Price.ToString("C2")</h2>
+                <span class="text-success small"><i class="bi bi-check-circle-fill"></i> В наличност</span>
+            </div>
+
+            @if (Model.VideoCard.CardTechnologies != null && Model.VideoCard.CardTechnologies.Any())
+            {
+                <div class="mb-4">
+                    <strong>Поддържани технологии:</strong><br />
+                    @foreach (var ct in Model.VideoCard.CardTechnologies)
+                    {
+                        <span class="badge border text-dark mt-1">@ct.Technology.Name</span>
+                    }
+                </div>
+            }
+
+            <form asp-controller="Cart" asp-action="AddToCart" method="post" class="mt-4">
+                <input type="hidden" name="cardId" value="@Model.VideoCard.Id" />
+                <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill shadow-sm">
+                    <i class="bi bi-cart-plus me-2"></i> Добави в количката
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-5">
+                    <h3 class="fw-bold mb-4 border-bottom pb-2">Описание на продукта</h3>
+                    <div class="lh-lg text-secondary">
+                        @if (!string.IsNullOrEmpty(Model.VideoCard.Description))
+                        {
+                            @Html.Raw(Model.VideoCard.Description.Replace("\n", "<br />"))
+                        }
+                        else
+                        {
+                            <p class="text-muted fst-italic">Няма налично описание за този модел.</p>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-lg-8 mx-auto">
+            <h3 class="fw-bold mb-4"><i class="bi bi-chat-left-text me-2"></i> Мнения на потребители (@Model.Comments.Count())</h3>
+
+            @* ПРОВЕРКА: Формата се вижда само ако потребителят НЕ Е админ и е логнат *@
+            @if (User.Identity.IsAuthenticated && !User.IsInRole("Admin"))
+            {
+                <div class="card border-0 shadow-sm rounded-4 mb-5 bg-light border">
+                    <div class="card-body p-4">
+                        <h5 class="mb-3 fw-bold">Остави коментар</h5>
+                        <form asp-action="AddComment" method="post">
+                            <input type="hidden" name="cardId" value="@Model.VideoCard.Id" />
+                            <div class="form-group mb-3">
+                                <textarea name="content" class="form-control rounded-3 shadow-none border-1" rows="3" placeholder="Какво мислите за тази карта?" required></textarea>
+                            </div>
+                            <div class="text-end">
+                                <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">Публикувай</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            }
+            else if (User.IsInRole("Admin"))
+            {
+                <div class="alert alert-info rounded-4 border-0 shadow-sm">
+                    <i class="bi bi-info-circle me-2"></i> Администраторите не могат да оставят коментари.
+                </div>
+            }
+
+            <div class="comments-list mt-4">
+                @if (!Model.Comments.Any())
+                {
+                    <div class="text-center py-4 bg-white rounded-4 border shadow-sm">
+                        <p class="text-muted mb-0">Бъдете първият, който ще остави коментар!</p>
+                    </div>
+                }
+                else
+                {
+                    @foreach (var comment in Model.Comments)
+                    {
+                        <div class="card border-0 shadow-sm rounded-4 mb-3 border-bottom border-primary border-3">
+                            <div class="card-body p-4">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; font-size: 0.8rem;">
+                                            @comment.User.Email.Substring(0, 1).ToUpper()
+                                        </div>
+                                        <h6 class="fw-bold mb-0 text-dark">@comment.User.Email.Split('@')[0]</h6>
+                                    </div>
+                                    <small class="text-muted">@comment.CreatedAt.ToString("dd.MM.yyyy HH:mm")</small>
+                                </div>
+                                <p class="card-text text-secondary mb-0">@comment.Content</p>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Истинският CSS код за фиксиране на фуутъра */
+    .container {
+        /* Допълнително разстояние в края на контейнера, за да не се застъпва с нищо */
+        margin-bottom: 100px !important;
+    }
+
+    .card {
+        transition: transform 0.2s ease;
+    }
+
+    .comments-list .card:hover {
+        transform: translateX(5px);
+    }
+
+	textarea:focus, input:focus {
+		box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+		border-color: #80bdff;
+	}
+
+    textarea{
+		resize: none;
+    }
+</style>

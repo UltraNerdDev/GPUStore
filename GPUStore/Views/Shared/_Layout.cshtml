@@ -109,10 +109,13 @@
 
     @if (User.Identity.IsAuthenticated && User.IsInRole("Admin"))
     {
-        <footer class="border-top footer text-muted bg-light">
-            <div class="d-flex align-items-center justify-content-between small">
-                <div>&copy; @DateTime.Now.Year - <strong>Admin Panel</strong></div>
-                <div><i class="bi bi-shield-lock"></i> Admin Mode</div>
+        @* mt-auto избутва фуутъра надолу, а py-3 добавя малко вътрешно разстояние *@
+        <footer class="border-top bg-light py-3 mt-auto">
+            <div class="container-fluid px-4">
+                <div class="d-flex align-items-center justify-content-between small text-muted">
+                    <div>&copy; @DateTime.Now.Year - <strong>Admin Panel</strong></div>
+                    <div><i class="bi bi-shield-lock"></i> Admin Mode</div>
+                </div>
             </div>
         </footer>
     }
