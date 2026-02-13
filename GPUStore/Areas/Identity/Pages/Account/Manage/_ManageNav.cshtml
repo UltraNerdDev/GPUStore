@@ -1,0 +1,37 @@
+﻿@* @inject SignInManager<IdentityUser> SignInManager
+@{
+    var hasExternalLogins = (await SignInManager.GetExternalAuthenticationSchemesAsync()).Any();
+}
+<ul class="nav nav-pills flex-column">
+    <li class="nav-item"><a class="nav-link @ManageNavPages.IndexNavClass(ViewContext)" id="profile" asp-page="./Index">Profile</a></li>
+    <li class="nav-item"><a class="nav-link @ManageNavPages.EmailNavClass(ViewContext)" id="email" asp-page="./Email">Email</a></li>
+    <li class="nav-item"><a class="nav-link @ManageNavPages.ChangePasswordNavClass(ViewContext)" id="change-password" asp-page="./ChangePassword">Password</a></li>
+    @if (hasExternalLogins)
+    {
+        <li id="external-logins" class="nav-item"><a id="external-login" class="nav-link @ManageNavPages.ExternalLoginsNavClass(ViewContext)" asp-page="./ExternalLogins">External logins</a></li>
+    }
+    <li class="nav-item"><a class="nav-link @ManageNavPages.TwoFactorAuthenticationNavClass(ViewContext)" id="two-factor" asp-page="./TwoFactorAuthentication">Two-factor authentication</a></li>
+    <li class="nav-item"><a class="nav-link @ManageNavPages.PersonalDataNavClass(ViewContext)" id="personal-data" asp-page="./PersonalData">Personal data</a></li>
+</ul>
+ *@
+
+@inject SignInManager<IdentityUser> SignInManager
+@{
+    var hasExternalLogins = (await SignInManager.GetExternalAuthenticationSchemesAsync()).Any();
+}
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+    <div class="list-group list-group-flush shadow-sm">
+        <a class="list-group-item list-group-item-action border-0 py-3 @ManageNavPages.IndexNavClass(ViewContext)" id="profile" asp-page="./Index">
+            <i class="bi bi-person-badge me-2"></i> Профил
+        </a>
+        <a class="list-group-item list-group-item-action border-0 py-3 @ManageNavPages.EmailNavClass(ViewContext)" id="email" asp-page="./Email">
+            <i class="bi bi-envelope-at me-2"></i> Имейл
+        </a>
+        <a class="list-group-item list-group-item-action border-0 py-3 @ManageNavPages.ChangePasswordNavClass(ViewContext)" id="change-password" asp-page="./ChangePassword">
+            <i class="bi bi-shield-lock me-2"></i> Парола
+        </a>
+        <a class="list-group-item list-group-item-action border-0 py-3 text-danger" id="logout" asp-area="Identity" asp-page="/Account/Logout">
+            <i class="bi bi-box-arrow-right me-2"></i> Изход
+        </a>
+    </div>
+</div>
