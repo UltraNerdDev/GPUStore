@@ -43,7 +43,32 @@ namespace GPUStore.Controllers
         public async Task<IActionResult> SeedDatabase()
         {
             await SeederClass.Initialize(HttpContext.RequestServices);
-            return RedirectToAction("Index", "VideoCards", new { message = "Базата е сийдната успешно!" });
+            return RedirectToAction("UserIndex", "VideoCards", new { message = "Базата е сийдната успешно!" });
+        }
+
+        [Authorize(Roles = "Admin")]
+        [HttpPost] // По-сигурно е да е Post за деструктивни действия
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ClearDatabase()
+        {
+            try
+            {
+                // Редът е важен заради релациите в базата!
+                _context.CardTechnologies.RemoveRange(_context.CardTechnologies);
+                _context.OrderItems.RemoveRange(_context.OrderItems); // Ако имаш поръчки
+                _context.VideoCards.RemoveRange(_context.VideoCards);
+                _context.Manufacturers.RemoveRange(_context.Manufacturers);
+                _context.Technologies.RemoveRange(_context.Technologies);
+
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Базата данни беше напълно изчистена.";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Грешка при изчистване: " + ex.Message;
+            }
+
+            return RedirectToAction("Index", "VideoCards");
         }
 
         public IActionResult Privacy()

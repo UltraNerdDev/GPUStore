@@ -72,10 +72,24 @@
                 <i class="bi bi-cpu d-block mb-2 fs-4"></i> Технологии
             </a>
         </div>
-        <div class="col-md-3">
-            <a asp-controller="Home" asp-action="SeedDatabase" class="btn btn-outline-secondary w-100 p-3 shadow-sm">
-                <i class="bi bi-cpu d-block mb-2 fs-4"></i> Запълни с данни (тестово)
-            </a>
+    </div>
+    <div class="card border-0 shadow-sm rounded-4 mt-4">
+        <div class="card-body p-4">
+            <h5 class="fw-bold mb-3"><i class="bi bi-database-fill-gear me-2"></i> Системни операции</h5>
+            <p class="text-muted small">Внимание: Използвайте бутона за сийдване само ако базата е празна. Бутонът за изтриване ще премахне всички продукти, технологии и производители!</p>
+
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <a asp-controller="Home" asp-action="SeedDatabase" class="btn btn-warning rounded-pill px-4 shadow-sm">
+                    <i class="bi bi-magic me-2"></i> Seed на базата данни
+                </a>
+
+                <form asp-controller="Home" asp-action="ClearDatabase" method="post" onsubmit="return confirm('Сигурни ли сте, че искате да ИЗТРИЕТЕ цялата информация от базата данни? Това действие е необратимо!');">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger rounded-pill px-4 shadow-sm">
+                        <i class="bi bi-trash3-fill me-2"></i> Изчисти базата данни
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 </div>

@@ -122,7 +122,7 @@
             }
 
             <div class="comments-list mt-4">
-                @if (!Model.Comments.Any())
+                @if (!Model.Comments.Any() && !User.IsInRole("Admin"))
                 {
                     <div class="text-center py-4 bg-white rounded-4 border shadow-sm">
                         <p class="text-muted mb-0">Бъдете първият, който ще остави коментар!</p>
