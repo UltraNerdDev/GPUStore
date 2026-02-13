@@ -1,6 +1,7 @@
 ﻿@model GPUStore.ViewModels.VideoCardCreateViewModel
 
 <div class="container mt-4">
+    <div asp-validation-summary="All" class="text-danger"></div>
     <h2>Редактирай Видеокарта</h2>
     <hr />
     @* ВАЖНО: Добавен enctype *@
@@ -8,6 +9,7 @@
         <input type="hidden" asp-for="VideoCard.Id" />
         @* Запазваме текущия ImageUrl в скрит field, за да не се затрие при валидация *@
         <input type="hidden" asp-for="VideoCard.ImageUrl" />
+        <input type="hidden" asp-for="VideoCard.AddedById" />
 
         <div class="row">
             <div class="col-md-6">
