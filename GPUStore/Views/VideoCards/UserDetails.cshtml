@@ -34,9 +34,38 @@
                 </div>
             }
 
+            @* <form asp-controller="Cart" asp-action="AddToCart" method="post" class="mt-4">
+                <input type="hidden" name="cardId" value="@Model.VideoCard.Id" />
+                @if (User.Identity.IsAuthenticated && !User.IsInRole("Admin"))
+                {
+                    <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill shadow-sm">
+                        <i class="bi bi-cart-plus me-2">Добави в количката</i>
+                    </button>
+                }
+            </form> *@
+
             <form asp-controller="Cart" asp-action="AddToCart" method="post" class="mt-4">
                 <input type="hidden" name="cardId" value="@Model.VideoCard.Id" />
-                <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill shadow-sm">
+
+                <div class="d-flex align-items-center mb-4">
+                    <label class="me-3 fw-bold text-dark">Количество:</label>
+
+                    <div class="input-group rounded-pill border overflow-hidden shadow-sm" style="width: 130px;">
+                        <button type="button" class="btn btn-light border-0 px-3" onclick="decrementQty()">
+                            <i class="bi bi-dash-lg"></i>
+                        </button>
+
+                        <input type="number" id="displayQty" name="quantity"
+                               class="form-control border-0 text-center fw-bold bg-white"
+                               value="1" min="1" readonly style="box-shadow: none;">
+
+                        <button type="button" class="btn btn-light border-0 px-3" onclick="incrementQty()">
+                            <i class="bi bi-plus-lg"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill shadow-sm py-3 fw-bold">
                     <i class="bi bi-cart-plus me-2"></i> Добави в количката
                 </button>
             </form>
@@ -147,4 +176,31 @@
     textarea{
 		resize: none;
     }
+
+    /* Премахва стрелките за Chrome, Safari, Edge, Opera */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Премахва стрелките за Firefox */
+    input[type=number] {
+        -moz-appearance: textfield;
+    }
 </style>
+
+<script>
+    function incrementQty() {
+        let input = document.getElementById('displayQty');
+        input.value = parseInt(input.value) + 1;
+    }
+
+    function decrementQty() {
+        let input = document.getElementById('displayQty');
+        let current = parseInt(input.value);
+        if (current > 1) {
+            input.value = current - 1;
+        }
+    }
+</script>

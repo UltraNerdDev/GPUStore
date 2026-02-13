@@ -31,8 +31,27 @@
                                 </div>
                             </td>
                             <td>@item.VideoCard.Price.ToString("C2")</td>
-                            <td>@item.Quantity бр.</td>
-                            <td class="fw-bold">@((item.Quantity * item.VideoCard.Price).ToString("C2"))</td>
+                            <td class="align-middle">
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <button class="btn btn-sm btn-outline-secondary rounded-circle px-2"
+                                            onclick="updateQty(@item.VideoCardId, -1)">
+                                        <i class="bi bi-dash-lg"></i>
+                                    </button>
+
+                                    <span id="qty-@item.VideoCardId" class="mx-3 fw-bold fs-5">@item.Quantity</span>
+
+                                    <button class="btn btn-sm btn-outline-secondary rounded-circle px-2"
+                                            onclick="updateQty(@item.VideoCardId, 1)">
+                                        <i class="bi bi-plus-lg"></i>
+                                    </button>
+                                </div>
+                            </td>
+
+                            <td class="align-middle">
+                                <span id="item-total-@item.VideoCardId">@((item.Quantity * item.VideoCard.Price).ToString("C2"))</span>
+                            </td>
+
+                            @*<h4 id="cart-total-sum">Общо: @Model.Sum(x => x.Quantity * x.VideoCard.Price).ToString("C2")</h4>*@
                             <td class="text-end">
                                 <a asp-action="Remove" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">
                                     <i class="bi bi-trash"></i>
@@ -44,8 +63,8 @@
                 <tfoot class="table-light">
                     <tr>
                         <td colspan="3" class="text-end fw-bold fs-5">Обща сума:</td>
-                        <td colspan="2" class="fw-bold fs-5 text-primary">
-                            @Model.Sum(i => i.Quantity * i.VideoCard.Price).ToString("C2")
+                        <td id="cart-total-sum" colspan=" 2" class="fw-bold fs-5 text-primary">
+                            @Model.Sum(x => x.Quantity * x.VideoCard.Price).ToString("C2")
                         </td>
                     </tr>
                 </tfoot>
@@ -58,3 +77,32 @@
         </div>
     }
 </div>
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        function updateQty(cardId, change) {
+            $.ajax({
+                url: '@Url.Action("UpdateQuantityAjax", "Cart")',
+                type: 'POST',
+                data: {
+                    cardId: cardId,
+                    change: change
+                },
+                success: function (response) {
+                    if (response.success) {
+                        if (response.removed) {
+                            // Ако количеството е 0, презареждаме или скриваме реда
+                            location.reload();
+                        } else {
+                            // Обновяваме количеството и цените без презареждане
+                            $('#qty-' + cardId).text(response.newQuantity);
+                            $('#item-total-' + cardId).text(response.itemTotal);
+                            $('#cart-total-sum').text('Общо: ' + response.cartTotal);
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+}

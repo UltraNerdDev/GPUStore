@@ -57,7 +57,10 @@
                                 <a asp-action="UserDetails" asp-route-id="@item.Id" class="btn btn-outline-primary w-100 rounded-pill mb-2">Детайли</a>
                                 <form asp-controller="Cart" asp-action="AddToCart" method="post">
                                     <input type="hidden" name="cardId" value="@item.Id" />
-                                    <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold shadow-sm">Купи</button>
+                                    @if (User.Identity.IsAuthenticated && !User.IsInRole("Admin"))
+                                    {
+                                        <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold shadow-sm">Купи</button>
+                                    }
                                 </form>
                             </div>
                         </div>

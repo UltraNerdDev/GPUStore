@@ -37,7 +37,7 @@ namespace GPUStore.Controllers
 
         // 2. Добавяне в количката
         [HttpPost]
-        public async Task<IActionResult> AddToCart(int cardId)
+        public async Task<IActionResult> AddToCart(int cardId, int quantity = 1)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
@@ -45,19 +45,19 @@ namespace GPUStore.Controllers
             var existingItem = await _context.CartItems
                 .FirstOrDefaultAsync(c => c.VideoCardId == cardId && c.UserId == userId);
 
-            if (existingItem != null)
+            if (existingItem == null)
             {
-                existingItem.Quantity++;
+                existingItem = new CartItem
+                {
+                    VideoCardId = cardId,
+                    UserId = userId,
+                    Quantity = quantity // Използваме подадената бройка
+                };
+                _context.CartItems.Add(existingItem);
             }
             else
             {
-                var cartItem = new CartItem
-                {
-                    UserId = userId,
-                    VideoCardId = cardId,
-                    Quantity = 1
-                };
-                _context.CartItems.Add(cartItem);
+                existingItem.Quantity += quantity; // Добавяме бройката към съществуващата
             }
 
             await _context.SaveChangesAsync();
@@ -74,6 +74,68 @@ namespace GPUStore.Controllers
                 await _context.SaveChangesAsync();
             }
             return RedirectToAction(nameof(Index));
+        }
+
+        //[HttpPost]
+        //public async Task<IActionResult> UpdateQuantity(int cardId, int change)
+        //{
+        //    var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        //    var cartItem = await _context.CartItems
+        //        .FirstOrDefaultAsync(c => c.VideoCardId == cardId && c.UserId == userId);
+
+        //    if (cartItem != null)
+        //    {
+        //        cartItem.Quantity += change;
+
+        //        // Ако количеството падне до 0 или по-малко, премахваме продукта
+        //        if (cartItem.Quantity <= 0)
+        //        {
+        //            _context.CartItems.Remove(cartItem);
+        //        }
+        //        else
+        //        {
+        //            _context.Update(cartItem);
+        //        }
+        //        await _context.SaveChangesAsync();
+        //    }
+
+        //    return RedirectToAction("I
+        //    ndex");
+        //}
+        [HttpPost]
+        public async Task<IActionResult> UpdateQuantityAjax(int cardId, int change)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var cartItem = await _context.CartItems
+                .Include(c => c.VideoCard)
+                .FirstOrDefaultAsync(c => c.VideoCardId == cardId && c.UserId == userId);
+
+            if (cartItem == null) return Json(new { success = false });
+
+            cartItem.Quantity += change;
+
+            if (cartItem.Quantity <= 0)
+            {
+                _context.CartItems.Remove(cartItem);
+                await _context.SaveChangesAsync();
+                return Json(new { success = true, removed = true });
+            }
+
+            _context.Update(cartItem);
+            await _context.SaveChangesAsync();
+
+            // Преизчисляваме общата сума на количката
+            var totalCartSum = await _context.CartItems
+                .Where(c => c.UserId == userId)
+                .SumAsync(c => c.Quantity * c.VideoCard.Price);
+
+            return Json(new
+            {
+                success = true,
+                newQuantity = cartItem.Quantity,
+                itemTotal = (cartItem.Quantity * cartItem.VideoCard.Price).ToString("C2"),
+                cartTotal = totalCartSum.ToString("C2")
+            });
         }
     }
 }
