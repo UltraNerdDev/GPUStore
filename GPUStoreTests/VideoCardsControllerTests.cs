@@ -1,24 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using GPUStore.Models;
+using Microsoft.AspNetCore.Mvc;
+using Moq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace GPUStoreTests
 {
-    // Domain model used by controller and repository
-    public class VideoCard
-    {
-        public int Id { get; set; }
-        public string Name { get; set; } = "";
-        public string Manufacturer { get; set; } = "";
-        public int MemoryMB { get; set; }
-        public decimal Price { get; set; }
-    }
-
-    // Repository interface
+    // Repository interface (kept here for test compilation)
     public interface IVideoCardRepository
     {
         IEnumerable<VideoCard> GetAll();
@@ -29,62 +19,7 @@ namespace GPUStoreTests
         IEnumerable<VideoCard> FindByManufacturer(string manufacturer);
     }
 
-    // Simple in-memory repository implementation for tests
-    public class InMemoryVideoCardRepository : IVideoCardRepository
-    {
-        private readonly List<VideoCard> _items;
-
-        public InMemoryVideoCardRepository(IEnumerable<VideoCard>? seed = null)
-        {
-            _items = seed?.Select(c => new VideoCard
-            {
-                Id = c.Id,
-                Name = c.Name,
-                Manufacturer = c.Manufacturer,
-                MemoryMB = c.MemoryMB,
-                Price = c.Price
-            }).ToList() ?? new List<VideoCard>();
-        }
-
-        public IEnumerable<VideoCard> GetAll() => _items.Select(i => Clone(i));
-
-        public VideoCard? GetById(int id) => _items.FirstOrDefault(i => i.Id == id) is VideoCard v ? Clone(v) : null;
-
-        public void Add(VideoCard card)
-        {
-            _items.Add(Clone(card));
-        }
-
-        public bool Update(VideoCard card)
-        {
-            var idx = _items.FindIndex(i => i.Id == card.Id);
-            if (idx == -1) return false;
-            _items[idx] = Clone(card);
-            return true;
-        }
-
-        public bool Delete(int id)
-        {
-            var existing = _items.FirstOrDefault(i => i.Id == id);
-            if (existing == null) return false;
-            _items.Remove(existing);
-            return true;
-        }
-
-        public IEnumerable<VideoCard> FindByManufacturer(string manufacturer)
-            => _items.Where(i => string.Equals(i.Manufacturer, manufacturer, StringComparison.OrdinalIgnoreCase)).Select(Clone);
-
-        private static VideoCard Clone(VideoCard src) => new VideoCard
-        {
-            Id = src.Id,
-            Name = src.Name,
-            Manufacturer = src.Manufacturer,
-            MemoryMB = src.MemoryMB,
-            Price = src.Price
-        };
-    }
-
-    // Minimal API-style controller to be tested
+    // Minimal API-style controller to be tested (kept simple for unit tests)
     [ApiController]
     [Route("api/[controller]")]
     public class VideoCardsController : ControllerBase
@@ -132,25 +67,109 @@ namespace GPUStoreTests
             => Ok(_repo.FindByManufacturer(manufacturer));
     }
 
-    // Test class containing 9 tests
+    // Tests using Moq for all repository interactions and correct model property names
     public class VideoCardsControllerTests
     {
-        private InMemoryVideoCardRepository CreateRepoWithSeed()
+        private Mock<IVideoCardRepository> CreateMockRepoWithSeed()
         {
-            var seed = new[]
+            var seed = new List<VideoCard>
             {
-                new VideoCard { Id = 1, Name = "Alpha", Manufacturer = "Nvidia", MemoryMB = 8192, Price = 499.99m },
-                new VideoCard { Id = 2, Name = "Beta", Manufacturer = "AMD", MemoryMB = 6144, Price = 299.99m },
-                new VideoCard { Id = 3, Name = "Gamma", Manufacturer = "Nvidia", MemoryMB = 12288, Price = 699.99m }
+                new VideoCard
+                {
+                    Id = 1,
+                    ModelName = "Alpha",
+                    ManufacturerId = 1,
+                    Manufacturer = new Manufacturer { Id = 1, Name = "Nvidia" },
+                    Price = 499.99m
+                },
+                new VideoCard
+                {
+                    Id = 2,
+                    ModelName = "Beta",
+                    ManufacturerId = 2,
+                    Manufacturer = new Manufacturer { Id = 2, Name = "AMD" },
+                    Price = 299.99m
+                },
+                new VideoCard
+                {
+                    Id = 3,
+                    ModelName = "Gamma",
+                    ManufacturerId = 1,
+                    Manufacturer = new Manufacturer { Id = 1, Name = "Nvidia" },
+                    Price = 699.99m
+                }
             };
-            return new InMemoryVideoCardRepository(seed);
+
+            // backing store for the mock repository (cloned to avoid shared refs)
+            var items = seed.Select(Clone).ToList();
+
+            var mock = new Mock<IVideoCardRepository>();
+
+            mock.Setup(r => r.GetAll())
+                .Returns(() => items.Select(Clone));
+
+            mock.Setup(r => r.GetById(It.IsAny<int>()))
+                .Returns((int id) =>
+                {
+                    var v = items.FirstOrDefault(i => i.Id == id);
+                    return v == null ? null : Clone(v);
+                });
+
+            mock.Setup(r => r.Add(It.IsAny<VideoCard>()))
+                .Callback((VideoCard card) =>
+                {
+                    // ensure new entry is cloned
+                    items.Add(Clone(card));
+                });
+
+            mock.Setup(r => r.Update(It.IsAny<VideoCard>()))
+                .Returns((VideoCard card) =>
+                {
+                    var idx = items.FindIndex(i => i.Id == card.Id);
+                    if (idx == -1) return false;
+                    items[idx] = Clone(card);
+                    return true;
+                });
+
+            mock.Setup(r => r.Delete(It.IsAny<int>()))
+                .Returns((int id) =>
+                {
+                    var existing = items.FirstOrDefault(i => i.Id == id);
+                    if (existing == null) return false;
+                    items.Remove(existing);
+                    return true;
+                });
+
+            mock.Setup(r => r.FindByManufacturer(It.IsAny<string>()))
+                .Returns((string manufacturer) =>
+                    items
+                        .Where(i => string.Equals(i.Manufacturer?.Name, manufacturer, StringComparison.OrdinalIgnoreCase))
+                        .Select(Clone)
+                );
+
+            return mock;
         }
+
+        private static VideoCard Clone(VideoCard src) => new VideoCard
+        {
+            Id = src.Id,
+            ModelName = src.ModelName,
+            Price = src.Price,
+            ManufacturerId = src.ManufacturerId,
+            Manufacturer = src.Manufacturer == null ? null : new Manufacturer
+            {
+                Id = src.Manufacturer.Id,
+                Name = src.Manufacturer.Name
+            },
+            ImageUrl = src.ImageUrl,
+            Description = src.Description
+        };
 
         [Fact]
         public void IndexReturnsAll()
         {
-            var repo = CreateRepoWithSeed();
-            var controller = new VideoCardsController(repo);
+            var mock = CreateMockRepoWithSeed();
+            var controller = new VideoCardsController(mock.Object);
 
             var result = controller.Get();
 
@@ -162,8 +181,8 @@ namespace GPUStoreTests
         [Fact]
         public void Details_ReturnsNotFound_WhenMissing()
         {
-            var repo = CreateRepoWithSeed();
-            var controller = new VideoCardsController(repo);
+            var mock = CreateMockRepoWithSeed();
+            var controller = new VideoCardsController(mock.Object);
 
             var result = controller.Get(999);
 
@@ -173,43 +192,64 @@ namespace GPUStoreTests
         [Fact]
         public void Details_ReturnsVideoCard()
         {
-            var repo = CreateRepoWithSeed();
-            var controller = new VideoCardsController(repo);
+            var mock = CreateMockRepoWithSeed();
+            var controller = new VideoCardsController(mock.Object);
 
             var result = controller.Get(2);
 
             var ok = Assert.IsType<OkObjectResult>(result.Result);
             var card = Assert.IsType<VideoCard>(ok.Value);
             Assert.Equal(2, card.Id);
-            Assert.Equal("Beta", card.Name);
+            Assert.Equal("Beta", card.ModelName);
+            Assert.NotNull(card.Manufacturer);
+            Assert.Equal("AMD", card.Manufacturer!.Name);
         }
 
         [Fact]
         public void Create_ReturnsCreatedAndAdds()
         {
-            var repo = CreateRepoWithSeed();
-            var controller = new VideoCardsController(repo);
+            var mock = CreateMockRepoWithSeed();
+            var controller = new VideoCardsController(mock.Object);
 
-            var newCard = new VideoCard { Id = 10, Name = "Delta", Manufacturer = "Intel", MemoryMB = 4096, Price = 199.99m };
+            var newCard = new VideoCard
+            {
+                Id = 10,
+                ModelName = "Delta",
+                ManufacturerId = 3,
+                Manufacturer = new Manufacturer { Id = 3, Name = "Intel" },
+                Price = 199.99m
+            };
+
             var result = controller.Post(newCard);
 
             var created = Assert.IsType<CreatedAtActionResult>(result.Result);
             var card = Assert.IsType<VideoCard>(created.Value);
             Assert.Equal(10, card.Id);
+            Assert.Equal("Delta", card.ModelName);
 
-            // verify repository now contains the item
-            var fetched = repo.GetById(10);
+            // verify repository now contains the item via mock backing list through GetById
+            var fetched = mock.Object.GetById(10);
             Assert.NotNull(fetched);
-            Assert.Equal("Delta", fetched!.Name);
+            Assert.Equal("Delta", fetched!.ModelName);
+            Assert.NotNull(fetched.Manufacturer);
+            Assert.Equal("Intel", fetched.Manufacturer!.Name);
         }
 
         [Fact]
         public void Create_ReturnsBadRequestOnDuplicate()
         {
-            var repo = CreateRepoWithSeed();
-            var controller = new VideoCardsController(repo);
+            var mock = CreateMockRepoWithSeed();
+            var controller = new VideoCardsController(mock.Object);
 
-            var duplicate = new VideoCard { Id = 1, Name = "AlphaCopy", Manufacturer = "Nvidia", MemoryMB = 8192, Price = 499.99m };
+            var duplicate = new VideoCard
+            {
+                Id = 1,
+                ModelName = "AlphaCopy",
+                ManufacturerId = 1,
+                Manufacturer = new Manufacturer { Id = 1, Name = "Nvidia" },
+                Price = 499.99m
+            };
+
             var result = controller.Post(duplicate);
 
             Assert.IsType<BadRequestObjectResult>(result.Result);
@@ -218,27 +258,43 @@ namespace GPUStoreTests
         [Fact]
         public void Edit_ReturnsNoContentAndUpdates()
         {
-            var repo = CreateRepoWithSeed();
-            var controller = new VideoCardsController(repo);
+            var mock = CreateMockRepoWithSeed();
+            var controller = new VideoCardsController(mock.Object);
 
-            var updated = new VideoCard { Id = 2, Name = "Beta-Updated", Manufacturer = "AMD", MemoryMB = 8192, Price = 349.99m };
+            var updated = new VideoCard
+            {
+                Id = 2,
+                ModelName = "Beta-Updated",
+                ManufacturerId = 2,
+                Manufacturer = new Manufacturer { Id = 2, Name = "AMD" },
+                Price = 349.99m
+            };
+
             var result = controller.Put(2, updated);
 
             Assert.IsType<NoContentResult>(result);
 
-            var fetched = repo.GetById(2);
+            var fetched = mock.Object.GetById(2);
             Assert.NotNull(fetched);
-            Assert.Equal("Beta-Updated", fetched!.Name);
-            Assert.Equal(8192, fetched.MemoryMB);
+            Assert.Equal("Beta-Updated", fetched!.ModelName);
+            Assert.Equal(349.99m, fetched.Price);
         }
 
         [Fact]
         public void Edit_ReturnsNotFound()
         {
-            var repo = CreateRepoWithSeed();
-            var controller = new VideoCardsController(repo);
+            var mock = CreateMockRepoWithSeed();
+            var controller = new VideoCardsController(mock.Object);
 
-            var updated = new VideoCard { Id = 999, Name = "NonExistent", Manufacturer = "X", MemoryMB = 0, Price = 0m };
+            var updated = new VideoCard
+            {
+                Id = 999,
+                ModelName = "NonExistent",
+                ManufacturerId = 99,
+                Manufacturer = new Manufacturer { Id = 99, Name = "X" },
+                Price = 0m
+            };
+
             var result = controller.Put(999, updated);
 
             Assert.IsType<NotFoundResult>(result);
@@ -247,8 +303,8 @@ namespace GPUStoreTests
         [Fact]
         public void Delete_ReturnsNoContentAndRemoves()
         {
-            var repo = CreateRepoWithSeed();
-            var controller = new VideoCardsController(repo);
+            var mock = CreateMockRepoWithSeed();
+            var controller = new VideoCardsController(mock.Object);
 
             var result = controller.Delete(1);
             Assert.IsType<NoContentResult>(result);
@@ -260,14 +316,18 @@ namespace GPUStoreTests
         [Fact]
         public void FilterByManufacturer_ReturnsFilteredList()
         {
-            var repo = CreateRepoWithSeed();
-            var controller = new VideoCardsController(repo);
+            var mock = CreateMockRepoWithSeed();
+            var controller = new VideoCardsController(mock.Object);
 
             var result = controller.FilterByManufacturer("Nvidia");
             var ok = Assert.IsType<OkObjectResult>(result.Result);
             var list = Assert.IsAssignableFrom<IEnumerable<VideoCard>>(ok.Value);
             Assert.Equal(2, list.Count());
-            Assert.All(list, c => Assert.Equal("Nvidia", c.Manufacturer, ignoreCase: true));
+            Assert.All(list, c =>
+            {
+                Assert.NotNull(c.Manufacturer);
+                Assert.Equal("Nvidia", c.Manufacturer!.Name, ignoreCase: true);
+            });
         }
     }
 }
