@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using GPUStore.Models;
 
 namespace GPUStoreTests
 {
@@ -69,6 +70,7 @@ namespace GPUStoreTests
             // Also validates the returned CartItem properties (UserId, VideoCardId, Quantity) match stored data.
             // Arrange
             using var context = CreateContext(nameof(Index_ReturnsCartItems_ForUser));
+
 
             var video = new VideoCard { Id = 1, ModelName = "GPU-1", Price = 100m, ImageUrl = "img.jpg" };
             context.VideoCards.Add(video);
