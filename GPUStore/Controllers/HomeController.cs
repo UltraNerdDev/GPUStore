@@ -59,6 +59,7 @@ namespace GPUStore.Controllers
                 _context.VideoCards.RemoveRange(_context.VideoCards);
                 _context.Manufacturers.RemoveRange(_context.Manufacturers);
                 _context.Technologies.RemoveRange(_context.Technologies);
+                _context.Orders.RemoveRange(_context.Orders); 
 
                 await _context.SaveChangesAsync();
                 TempData["SuccessMessage"] = "Базата данни беше напълно изчистена.";
