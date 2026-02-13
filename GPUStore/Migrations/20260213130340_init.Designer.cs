@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GPUStore.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260212190144_AddDescAndComments")]
-    partial class AddDescAndComments
+    [Migration("20260213130340_init")]
+    partial class init
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

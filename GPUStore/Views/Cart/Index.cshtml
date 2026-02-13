@@ -25,10 +25,12 @@
                     {
                         <tr>
                             <td>
+                                <a asp-controller="VideoCards" asp-action="UserDetails" asp-route-id="@item.VideoCard.Id" class="text-decoration-none text-dark">
                                 <div class="d-flex align-items-center">
                                     <img src="~/images/@item.VideoCard.ImageUrl" style="width: 60px;" class="me-3" />
                                     <span class="fw-bold">@item.VideoCard.ModelName</span>
                                 </div>
+                                </a>
                             </td>
                             <td>@item.VideoCard.Price.ToString("C2")</td>
                             <td class="align-middle">

@@ -10,6 +10,7 @@ namespace GPUStore.Models
         [Required]
         public string ModelName { get; set; }
         [Column(TypeName = "decimal(10,2)")]
+        [Range(0.01, 20000, ErrorMessage = "Въведете валидно число")]
         public decimal Price { get; set; }
 
         public int ManufacturerId { get; set; }
