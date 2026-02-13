@@ -2,6 +2,7 @@ using System.Diagnostics;
 using GPUStore.Data;
 using GPUStore.Models;
 using GPUStore.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -36,6 +37,13 @@ namespace GPUStore.Controllers
 
             // Ако е обикновен потребител или не е логнат - показваме стандартната начална страница
             return View();
+        }
+
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> SeedDatabase()
+        {
+            await SeederClass.Initialize(HttpContext.RequestServices);
+            return RedirectToAction("Index", "VideoCards", new { message = "Базата е сийдната успешно!" });
         }
 
         public IActionResult Privacy()

@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace GPUStore.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260213144739_removedUrlAnnotationFromVideoCardModel")]
-    partial class removedUrlAnnotationFromVideoCardModel
+    [Migration("20260213153745_initwtfbro")]
+    partial class initwtfbro
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
