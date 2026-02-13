@@ -30,13 +30,35 @@ namespace GPUStore.Controllers
         }
 
         // Записване в базата (POST)
+        //[HttpPost]
+        //public IActionResult Create(Manufacturer manufacturer)
+        //{
+        //    if (ModelState.IsValid)
+        //    {
+        //        _context.Manufacturers.Add(manufacturer);
+        //        _context.SaveChanges();
+        //        return RedirectToAction(nameof(Index));
+        //    }
+        //    return View(manufacturer);
+        //}
         [HttpPost]
-        public IActionResult Create(Manufacturer manufacturer)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create([Bind("Id,Name")] Manufacturer manufacturer)
         {
+            // 1. Проверка за дубликат
+            bool exists = await _context.Manufacturers.AnyAsync(t => t.Name == manufacturer.Name);
+
+            if (exists)
+            {
+                // Ръчно добавяме грешка към ModelState, която ще се появи под полето Name
+                ModelState.AddModelError("Name", "Този производител вече съществува в базата.");
+            }
+
+            // 2. Стандартната проверка
             if (ModelState.IsValid)
             {
-                _context.Manufacturers.Add(manufacturer);
-                _context.SaveChanges();
+                _context.Add(manufacturer);
+                await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
             return View(manufacturer);
@@ -52,11 +74,34 @@ namespace GPUStore.Controllers
         }
 
         // POST: Manufacturers/Edit/5
+        //[HttpPost]
+        //[ValidateAntiForgeryToken]
+        //public async Task<IActionResult> Edit(int id, Manufacturer manufacturer)
+        //{
+        //    if (id != manufacturer.Id) return NotFound();
+
+        //    if (ModelState.IsValid)
+        //    {
+        //        _context.Update(manufacturer);
+        //        await _context.SaveChangesAsync();
+        //        return RedirectToAction(nameof(Index));
+        //    }
+        //    return View(manufacturer);
+        //}
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Manufacturer manufacturer)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Name")] Manufacturer manufacturer)
         {
             if (id != manufacturer.Id) return NotFound();
+
+            // Проверка за дублиране на име
+            bool exists = await _context.Manufacturers
+                .AnyAsync(m => m.Name == manufacturer.Name && m.Id != id);
+
+            if (exists)
+            {
+                ModelState.AddModelError("Name", "Вече съществува производител с това име.");
+            }
 
             if (ModelState.IsValid)
             {

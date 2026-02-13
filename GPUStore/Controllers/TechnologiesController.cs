@@ -30,14 +30,36 @@ namespace GPUStore.Controllers
         }
 
         // 3. Записване в базата (POST)
+        //[HttpPost]
+        //[ValidateAntiForgeryToken]
+        //public IActionResult Create(Technology technology)
+        //{
+        //    if (ModelState.IsValid)
+        //    {
+        //        _context.Technologies.Add(technology);
+        //        _context.SaveChanges();
+        //        return RedirectToAction(nameof(Index));
+        //    }
+        //    return View(technology);
+        //}
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(Technology technology)
+        public async Task<IActionResult> Create([Bind("Id,Name")] Technology technology)
         {
+            // 1. Проверка за дубликат
+            bool exists = await _context.Technologies.AnyAsync(t => t.Name == technology.Name);
+
+            if (exists)
+            {
+                // Ръчно добавяме грешка към ModelState, която ще се появи под полето Name
+                ModelState.AddModelError("Name", "Тази технология вече съществува в базата.");
+            }
+
+            // 2. Стандартната проверка
             if (ModelState.IsValid)
             {
-                _context.Technologies.Add(technology);
-                _context.SaveChanges();
+                _context.Add(technology);
+                await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
             return View(technology);
@@ -54,12 +76,36 @@ namespace GPUStore.Controllers
             return View(technology);
         }
 
+
         // POST: Technologies/Edit/5
+        //[HttpPost]
+        //[ValidateAntiForgeryToken]
+        //public async Task<IActionResult> Edit(int id, Technology technology)
+        //{
+        //    if (id != technology.Id) return NotFound();
+
+        //    if (ModelState.IsValid)
+        //    {
+        //        _context.Update(technology);
+        //        await _context.SaveChangesAsync();
+        //        return RedirectToAction(nameof(Index));
+        //    }
+        //    return View(technology);
+        //}
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Technology technology)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,Name")] Technology technology)
         {
             if (id != technology.Id) return NotFound();
+
+            // Проверка за дублиране на име
+            bool exists = await _context.Technologies
+                .AnyAsync(m => m.Name == technology.Name && m.Id != id);
+
+            if (exists)
+            {
+                ModelState.AddModelError("Name", "Тази технология вече съществува в базата.");
+            }
 
             if (ModelState.IsValid)
             {
