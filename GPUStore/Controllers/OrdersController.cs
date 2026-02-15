@@ -1,11 +1,17 @@
-﻿using GPUStore.Data;
+﻿// ============================================================
+// Controllers/OrdersController.cs — Управление на поръчки
+// ============================================================
+// Разделен на два слоя:
+//   ADMIN: Index (всички), Details (конкретна), UpdateStatus (статус)
+//   КЛИЕНТ: Checkout (преглед), ConfirmOrder (финализиране), MyOrders (история)
+// ============================================================
+
+using GPUStore.Data;
 using GPUStore.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
 using System.Security.Claims;
-
 
 namespace GPUStore.Controllers
 {
@@ -19,28 +25,36 @@ namespace GPUStore.Controllers
             _context = context;
         }
 
-        // 1. Списък с всички поръчки
+        /// <summary>
+        /// GET: /Orders  (ADMIN)
+        /// Списък с всички поръчки, сортирани от най-новите.
+        /// Include(o => o.User) — зарежда Email на клиента за показване.
+        /// </summary>
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Index()
         {
             var orders = await _context.Orders
-                .Include(o => o.User) // Да видим кой е поръчал
-                .Include(o => o.OrderItems)
-                .OrderByDescending(o => o.OrderDate)
+                .Include(o => o.User)        // JOIN към AspNetUsers за Email
+                .Include(o => o.OrderItems)  // Зарежда елементите (за изчисляване на суми в изгледа)
+                .OrderByDescending(o => o.OrderDate)  // Последните поръчки първо
                 .ToListAsync();
             return View(orders);
         }
 
-        // 2. Детайли на конкретна поръчка
+        /// <summary>
+        /// GET: /Orders/Details/5  (ADMIN)
+        /// Детайлна страница за конкретна поръчка с всички продукти.
+        /// ThenInclude зарежда VideoCard за всеки OrderItem (снимка и наименование).
+        /// </summary>
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
 
             var order = await _context.Orders
-                .Include(o => o.User)
-                .Include(o => o.OrderItems)
-                    .ThenInclude(oi => oi.VideoCard) // Да видим кои карти са вътре
+                .Include(o => o.User)         // Клиентът
+                .Include(o => o.OrderItems)   // Елементите на поръчката
+                    .ThenInclude(oi => oi.VideoCard)  // И за всеки елемент — видеокартата
                 .FirstOrDefaultAsync(m => m.Id == id);
 
             if (order == null) return NotFound();
@@ -48,7 +62,11 @@ namespace GPUStore.Controllers
             return View(order);
         }
 
-        // 3. Промяна на статус (напр. от "Обработва се" на "Изпратена")
+        /// <summary>
+        /// POST: /Orders/UpdateStatus  (ADMIN)
+        /// Обновява статуса на поръчка.
+        /// Статуси: Pending → Processed → Shipped / Cancelled
+        /// </summary>
         [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> UpdateStatus(int id, string newStatus)
@@ -59,57 +77,48 @@ namespace GPUStore.Controllers
                 order.Status = newStatus;
                 await _context.SaveChangesAsync();
             }
+            // Пренасочваме обратно към Details страницата за тази поръчка
             return RedirectToAction(nameof(Details), new { id = id });
         }
 
-        // ВРЕМЕНЕН МЕТОД: Извикай /Orders/Seed в браузъра
+        /// <summary>
+        /// GET: /Orders/Seed  (ADMIN) — Тестови метод
+        /// Създава 2 тестови поръчки с различни статуси за демо цели.
+        /// Изисква поне 1 потребител и 1 видеокарта в базата.
+        /// </summary>
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Seed()
         {
-            // Вземаме първия потребител и първата видеокарта от базата
             var user = await _context.Users.FirstOrDefaultAsync();
             var card = await _context.VideoCards.FirstOrDefaultAsync();
 
             if (user == null || card == null)
                 return Content("Трябва първо да имаш регистриран потребител и добавена видеокарта!");
 
+            // Поръчка 1: Статус Pending (нова)
             var testOrder2 = new Order
             {
                 UserId = user.Id,
                 OrderDate = DateTime.Now,
-                Status = "Pending",
+                Status = "Изчакваща",
                 TotalPrice = card.Price,
                 OrderItems = new List<OrderItem>
-            {
-                    new OrderItem
-                    {
-                        VideoCardId = card.Id,
-                        Quantity = 1,
-                        PriceAtPurchase = card.Price
-                    }
+                {
+                    new OrderItem { VideoCardId = card.Id, Quantity = 1, PriceAtPurchase = card.Price }
                 }
             };
 
+            // Поръчка 2: Статус Cancelled (отказана) с 2 различни OrderItems
             var testOrder3 = new Order
             {
                 UserId = user.Id,
                 OrderDate = DateTime.Now,
-                Status = "Cancelled",
+                Status = "Отказана",
                 TotalPrice = card.Price,
                 OrderItems = new List<OrderItem>
-            {
-                    new OrderItem
-                    {
-                        VideoCardId = card.Id,
-                        Quantity = 1,
-                        PriceAtPurchase = card.Price
-                    },
-                    new OrderItem
-                    {
-                        VideoCardId = card.Id,
-                        Quantity = 2,
-                        PriceAtPurchase = card.Price
-                    }
+                {
+                    new OrderItem { VideoCardId = card.Id, Quantity = 1, PriceAtPurchase = card.Price },
+                    new OrderItem { VideoCardId = card.Id, Quantity = 2, PriceAtPurchase = card.Price }
                 }
             };
 
@@ -120,99 +129,115 @@ namespace GPUStore.Controllers
             return Content("Тестовата поръчка е създадена! Отиди на /Orders/Index");
         }
 
+        /// <summary>
+        /// GET: /Orders/Checkout  (КЛИЕНТ)
+        /// Показва преглед на количката преди финализиране на поръчката.
+        /// Admin е блокиран — пренасочва се.
+        /// Ако количката е празна — пренасочва към Cart/Index.
+        /// </summary>
         public async Task<IActionResult> Checkout()
         {
-            // ЗАЩИТА: Ако админът се опита да влезе ръчно, го гоним
             if (User.IsInRole("Admin"))
-            {
                 return RedirectToAction("Index", "Home");
-            }
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            // Вземаме продуктите от количката
             var cartItems = await _context.CartItems
                 .Include(c => c.VideoCard)
                 .Where(c => c.UserId == userId)
                 .ToListAsync();
 
+            // Ако количката е празна — няма смисъл от Checkout
             if (!cartItems.Any())
-            {
                 return RedirectToAction("Index", "Cart");
-            }
 
+            // Подаваме CartItems към Checkout.cshtml (не Order модел!)
             return View(cartItems);
         }
 
+        /// <summary>
+        /// POST: /Orders/ConfirmOrder  (КЛИЕНТ)
+        /// ОСНОВНИЯТ МЕТОД ЗА ЗАВЪРШВАНЕ НА ПОРЪЧКА.
+        ///
+        /// Процес (в 1 транзакция):
+        ///   1. Взима CartItems на потребителя
+        ///   2. Създава Order с Status = "Pending"
+        ///   3. Прехвърля CartItems → OrderItems (фиксира цените!)
+        ///   4. Изтрива ВСИЧКИ CartItems на потребителя
+        ///   5. Пренасочва към Success страницата
+        /// </summary>
         [HttpPost]
         [Authorize]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ConfirmOrder()
         {
-            // ЗАЩИТА: Ако админът се опита да влезе ръчно, го гоним
             if (User.IsInRole("Admin"))
-            {
                 return RedirectToAction("Index", "Home");
-            }
 
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            // 1. Вземаме продуктите от количката
+            // СТЪПКА 1: Вземаме всички CartItems на потребителя
             var cartItems = await _context.CartItems
-                .Include(c => c.VideoCard)
+                .Include(c => c.VideoCard)  // Нужен за Price при изчисляване на TotalPrice
                 .Where(c => c.UserId == userId)
                 .ToListAsync();
 
+            // Ако количката е вече изпразнена — пренасочваме
             if (!cartItems.Any()) return RedirectToAction("UserIndex", "VideoCards");
 
-            // 2. Създаваме основната поръчка
+            // СТЪПКА 2: Създаваме Order обекта.
+            // TotalPrice = сума от (Quantity * цена) за всеки продукт
             var order = new Order
             {
                 UserId = userId,
                 OrderDate = DateTime.Now,
-                Status = "Pending",
+                Status = "Изчакваща",  // Всяка нова поръчка е Изчакваща
                 TotalPrice = cartItems.Sum(i => i.Quantity * i.VideoCard.Price),
                 OrderItems = new List<OrderItem>()
             };
 
-            // 3. Прехвърляме продуктите от количката в OrderItems
+            // СТЪПКА 3: Прехвърляме CartItems → OrderItems.
+            // КРИТИЧНО: PriceAtPurchase = i.VideoCard.Price в ТОЗИ МОМЕНТ.
+            // Ако цената се промени след поръчката — историческата стойност остава.
             foreach (var item in cartItems)
             {
                 order.OrderItems.Add(new OrderItem
                 {
                     VideoCardId = item.VideoCardId,
                     Quantity = item.Quantity,
-                    PriceAtPurchase = item.VideoCard.Price // Запазваме цената в момента на покупката
+                    PriceAtPurchase = item.VideoCard.Price  // Зафиксирана цена!
                 });
             }
 
             _context.Orders.Add(order);
 
-            // 4. ИЗТРИВАМЕ количката на потребителя
+            // СТЪПКА 4: Изтриваме количката — тя вече е "конвертирана" в поръчка
             _context.CartItems.RemoveRange(cartItems);
 
+            // Всичко горе в ЕДНА транзакция
             await _context.SaveChangesAsync();
 
-            // 5. Препращаме към страница за успех
+            // СТЪПКА 5: Пренасочваме към Success с Id на поръчката
             return View("Success", order.Id);
         }
 
+        /// <summary>
+        /// GET: /Orders/MyOrders  (КЛИЕНТ)
+        /// История на поръчките за текущия потребител.
+        /// Admin се пренасочва към Index (всички поръчки).
+        /// </summary>
         [Authorize]
         public async Task<IActionResult> MyOrders()
         {
-            // ЗАЩИТА: Ако е админ, го пращаме към списъка за управление на всички поръчки
             if (User.IsInRole("Admin"))
-            {
                 return RedirectToAction(nameof(Index));
-            }
 
-            // Вземаме ID-то на текущия потребител
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            // Извличаме само неговите поръчки, подредени от най-новите към най-старите
+            // Зареждаме САМО поръчките на текущия потребител
             var orders = await _context.Orders
                 .Where(o => o.UserId == userId)
-                .OrderByDescending(o => o.OrderDate)
+                .OrderByDescending(o => o.OrderDate)  // Последните първо
                 .ToListAsync();
 
             return View(orders);

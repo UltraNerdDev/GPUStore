@@ -1,10 +1,17 @@
-﻿@model IEnumerable<GPUStore.Models.Order>
+﻿@* ============================================================
+   Views/Orders/MyOrders.cshtml — История на поръчките (Клиент)
+   ============================================================
+   Модел: IEnumerable<Order> — всички поръчки на текущия потребител.
+   Статусите се показват с цветни badge-ове.
+   ============================================================ *@
+@model IEnumerable<GPUStore.Models.Order>
 
 <div class="container mt-4">
     <h2 class="mb-4"><i class="bi bi-box-seam text-primary"></i> Моите поръчки</h2>
 
     @if (!Model.Any())
     {
+        @* Ако няма поръчки — призив за пазаруване *@
         <div class="alert alert-light border shadow-sm text-center py-5">
             <h4>Все още нямате направени поръчки.</h4>
             <a href="/VideoCards/UserIndex" class="btn btn-primary mt-3">Разгледай каталога</a>
@@ -20,31 +27,38 @@
                         <th>Дата</th>
                         <th>Обща сума</th>
                         <th>Статус</th>
-                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var order in Model)
                     {
                         <tr>
+                            @* #@order.Id — текстовото # прави ID-то по-четимо *@
                             <td class="fw-bold">#@order.Id</td>
                             <td>@order.OrderDate.ToString("dd.MM.yyyy HH:mm")</td>
+                            @* TotalPrice идва директно от Order модела (зафиксиран при покупката) *@
                             <td class="fw-bold text-primary">@order.TotalPrice.ToString("C2")</td>
                             <td>
-                                @if (order.Status == "Pending")
+                                @* Цветни badge-ове за различните статуси *@
+                                @if (order.Status == "Изчакваща")
                                 {
-                                    <span class="badge bg-warning text-dark">Обработва се</span>
+                                    <span class="badge bg-warning text-dark">Изчакваща</span>
                                 }
-                                else if (order.Status == "Shipped")
+                                else if (order.Status == "Обработена")
                                 {
-                                    <span class="badge bg-info">Изпратена</span>
+                                    <span class="badge bg-info">Обработена</span>
                                 }
-                                else if (order.Status == "Delivered")
+                                else if (order.Status == "Изпратена")
                                 {
-                                    <span class="badge bg-success">Доставена</span>
+                                    <span class="badge bg-success">Изпратена</span>
+                                }
+                                else if (order.Status == "Отказана")
+                                {
+                                    <span class="badge bg-danger">Отказана</span>
                                 }
                                 else
                                 {
+                                    @* Fallback за неизвестни статуси *@
                                     <span class="badge bg-secondary">@order.Status</span>
                                 }
                             </td>

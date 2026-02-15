@@ -1,4 +1,11 @@
-﻿@model IEnumerable<GPUStore.Models.Order>
+﻿@* ============================================================
+   Views/Orders/Index.cshtml — Всички поръчки (Admin)
+   ============================================================
+   Модел: IEnumerable<Order>
+   Admin вижда ВСИЧКИ поръчки с цветно-кодирани статуси.
+   Switch expression генерира CSS клас за badge-а.
+   ============================================================ *@
+@model IEnumerable<GPUStore.Models.Order>
 
 <div class="container mt-4">
     <h2>Управление на Поръчки</h2>
@@ -7,7 +14,7 @@
             <tr>
                 <th>ID</th>
                 <th>Дата</th>
-                <th>Потребител (ID)</th>
+                <th>Потребител</th>
                 <th>Обща Сума</th>
                 <th>Статус</th>
                 <th>Действия</th>
@@ -19,17 +26,20 @@
                 <tr>
                     <td>@item.Id</td>
                     <td>@item.OrderDate.ToShortDateString()</td>
-                    <td>@item.User?.Email</td> @* Показваме имейла, ако връзката работи *@
+                    @* ?.Email — null-conditional: ако User е null, показва нищо *@
+                    <td>@item.User?.Email</td>
+                    @* Сумата се изчислява от OrderItems (не от TotalPrice) за по-голяма точност *@
                     <td>@item.OrderItems.Sum(oi => oi.Quantity * oi.PriceAtPurchase).ToString("C2")</td>
                     <td>
                         @{
+                            @* C# 8+ switch expression — компактна алтернатива на switch statement *@
                             var badgeClass = item.Status switch
                             {
-                                "Pending" => "bg-warning text-dark",
-                                "Processed" => "bg-info text-dark",
-                                "Shipped" => "bg-success",
-                                "Cancelled" => "bg-danger",
-                                _ => "bg-secondary"
+                                "Изчакваща" => "bg-warning text-dark",  // Жълто
+                                "Обработена" => "bg-info text-dark",     // Синьо
+                                "Изпратена" => "bg-success",            // Зелено
+                                "Отказана" => "bg-danger",             // Червено
+                                _ => "bg-secondary"           // Сиво (fallback)
                             };
                         }
                         <span class="badge @badgeClass">@item.Status</span>

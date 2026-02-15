@@ -1,4 +1,14 @@
-﻿@model GPUStore.ViewModels.VideoCardCreateViewModel
+﻿@* ============================================================
+   Views/VideoCards/Create.cshtml — Форма за нова видеокарта (Admin)
+   ============================================================
+   Модел: VideoCardCreateViewModel
+
+   Особености:
+   - enctype="multipart/form-data" е ЗАДЪЛЖИТЕЛЕН за IFormFile upload
+   - Динамичен списък с чекбоксове за технологии (цикъл с индекс)
+   - Dropdown с производители чрез asp-items="Model.Manufacturers"
+   ============================================================ *@
+@model GPUStore.ViewModels.VideoCardCreateViewModel
 
 <div class="container">
     <div class="row">
@@ -8,51 +18,72 @@
                     <h2 class="mb-0">Добави Нова Видеокарта</h2>
                 </div>
                 <div class="card-body">
-                    @* ВАЖНО: enctype е задължителен за качване на файлове *@
+                    @* enctype="multipart/form-data" е ЗАДЪЛЖИТЕЛЕН когато формата качва файлове!
+                       Без него IFormFile в контролера ще е null. *@
                     <form asp-action="Create" method="post" enctype="multipart/form-data">
+                        @* asp-validation-summary показва обобщени ModelState грешки *@
                         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
+                        @* Модел — asp-for генерира name="VideoCard.ModelName" за Model Binding *@
                         <div class="form-group mb-3">
                             <label class="control-label fw-bold">Модел име</label>
-                            <input asp-for="VideoCard.ModelName" class="form-control" placeholder="напр. GeForce RTX 4090" />
+                            <input asp-for="VideoCard.ModelName" class="form-control"
+                                   placeholder="напр. GeForce RTX 4090" />
+                            @* asp-validation-for показва специфична грешка за полето *@
                             <span asp-validation-for="VideoCard.ModelName" class="text-danger"></span>
                         </div>
 
+                        @* Производител — asp-items зарежда SelectList автоматично като <option> елементи *@
                         <div class="form-group mb-3">
                             <label class="control-label fw-bold">Производител</label>
-                            <select asp-for="VideoCard.ManufacturerId" asp-items="Model.Manufacturers" class="form-control">
+                            <select asp-for="VideoCard.ManufacturerId"
+                                    asp-items="Model.Manufacturers"
+                                    class="form-control">
                                 <option value="">-- Избери производител --</option>
                             </select>
                             <span asp-validation-for="VideoCard.ManufacturerId" class="text-danger"></span>
                         </div>
 
+                        @* Цена — type="number" step="0.01" за десетични числа *@
                         <div class="form-group mb-3">
                             <label class="control-label fw-bold">Цена</label>
                             <div class="input-group">
                                 <span class="input-group-text">лв.</span>
-                                <input asp-for="VideoCard.Price" class="form-control" type="number" step="0.01" />
+                                <input asp-for="VideoCard.Price" class="form-control"
+                                       type="number" step="0.01" />
                             </div>
                             <span asp-validation-for="VideoCard.Price" class="text-danger"></span>
                         </div>
 
-                        @* НОВО: Поле за качване на снимка *@
+                        @* Качване на снимка — asp-for="ImageFile" се свързва с IFormFile свойството *@
                         <div class="form-group mb-4">
                             <label class="control-label fw-bold">Снимка на продукта</label>
+                            @* accept="image/*" ограничава file picker само до изображения *@
                             <input asp-for="ImageFile" type="file" class="form-control" accept="image/*" />
                             <small class="text-muted">Препоръчителен формат: .jpg, .png</small>
                         </div>
 
                         <hr />
                         <h4 class="mb-3">Технологии</h4>
+                        @* ВАЖНО: Използваме FOR с индекс (int i), не foreach!
+                           ASP.NET Core Model Binding изисква индексиран достъп за List<T>:
+                           AvailableTechnologies[0].IsSelected, AvailableTechnologies[1].IsSelected и т.н.
+                           С foreach нямаме индекс и binding не работи коректно. *@
                         <div class="row mb-4">
                             @for (int i = 0; i < Model.AvailableTechnologies.Count; i++)
                             {
                                 <div class="col-md-4 mb-2">
                                     <div class="form-check card p-2 border-light shadow-sm">
+                                        @* Скрити полета за TechnologyId и Name — не се показват,
+                                           но се изпращат с формата за корректен Model Binding *@
                                         <input type="hidden" asp-for="@Model.AvailableTechnologies[i].TechnologyId" />
                                         <input type="hidden" asp-for="@Model.AvailableTechnologies[i].Name" />
-                                        <input asp-for="@Model.AvailableTechnologies[i].IsSelected" class="form-check-input ms-1" type="checkbox" />
-                                        <label class="form-check-label ms-4">@Model.AvailableTechnologies[i].Name</label>
+                                        @* Чекбоксът — само IsSelected се показва *@
+                                        <input asp-for="@Model.AvailableTechnologies[i].IsSelected"
+                                               class="form-check-input ms-1" type="checkbox" />
+                                        <label class="form-check-label ms-4">
+                                            @Model.AvailableTechnologies[i].Name
+                                        </label>
                                     </div>
                                 </div>
                             }
@@ -69,6 +100,7 @@
     </div>
 </div>
 
+@* Зарежда jQuery Validation за client-side валидация (преди изпращане на формата) *@
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");

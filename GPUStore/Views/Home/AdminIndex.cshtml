@@ -1,4 +1,15 @@
-﻿@model GPUStore.ViewModels.AdminDashboardViewModel
+﻿@* ============================================================
+   Views/Home/AdminIndex.cshtml — Admin Dashboard
+   ============================================================
+   Модел: AdminDashboardViewModel — 4 статистики + бързи действия.
+
+   Показва:
+   1. Кой е влязъл и с каква роля
+   2. 4 статистически "кутийки" (карти, поръчки, производители, оборот)
+   3. Бутони за бързи действия
+   4. Системни операции (Seed/Clear на базата)
+   ============================================================ *@
+@model GPUStore.ViewModels.AdminDashboardViewModel
 
 <div class="container mt-4">
     <div class="text-center mb-5">
@@ -6,19 +17,24 @@
         <p class="lead text-muted">Вътрешна система за управление на наличности, поръчки и партньори.</p>
     </div>
 
-    @* Инфо блок за текущия потребител *@
+    @* Информационна лента: кой е влязъл *@
     <div class="alert alert-light border shadow-sm mb-4">
-        <i class="bi bi-person-circle"></i> Влезли сте като: <strong>@User.Identity.Name</strong>
+        <i class="bi bi-person-circle"></i>
+        @* User.Identity.Name = имейлът на логнатия потребител *@
+        Влезли сте като: <strong>@User.Identity.Name</strong>
         <span class="mx-2">|</span>
         Роля: <span class="badge bg-primary">Admin</span>
     </div>
 
-    @* СТАТИСТИКА (Кутийките) *@
+    @* ── СТАТИСТИЧЕСКИ КУТИЙКИ ── *@
+    @* Данните идват от AdminDashboardViewModel, попълнен в HomeController.Index() *@
     <div class="row g-4 mb-5">
+        @* g-4 = gap между колоните *@
         <div class="col-md-3">
             <div class="card shadow-sm border-0 h-100 text-center p-3">
                 <div class="card-body">
                     <h5 class="text-muted mb-3">Видеокарти</h5>
+                    @* display-5 = голям шрифт за числата *@
                     <div class="display-5 fw-bold text-primary">@Model.TotalVideoCards</div>
                 </div>
             </div>
@@ -43,47 +59,64 @@
             <div class="card shadow-sm border-0 h-100 text-center p-3">
                 <div class="card-body">
                     <h5 class="text-muted mb-3">Общ оборот</h5>
+                    @* "C0" = валутен формат без десетични места (за по-голяма четимост) *@
                     <div class="display-6 fw-bold text-dark">@Model.TotalRevenue.ToString("C0")</div>
                 </div>
             </div>
         </div>
     </div>
 
-    @* БЪРЗИ ДЕЙСТВИЯ *@
+    @* ── БЪРЗИ ДЕЙСТВИЯ ── *@
     <h4 class="mb-4">Бързи действия</h4>
     <div class="row g-3">
         <div class="col-md-3">
-            <a asp-controller="VideoCards" asp-action="Create" class="btn btn-outline-primary w-100 p-3 shadow-sm">
+            <a asp-controller="VideoCards" asp-action="Create"
+               class="btn btn-outline-primary w-100 p-3 shadow-sm">
                 <i class="bi bi-plus-circle d-block mb-2 fs-4"></i> Добави карта
             </a>
         </div>
         <div class="col-md-3">
-            <a asp-controller="Orders" asp-action="Index" class="btn btn-outline-success w-100 p-3 shadow-sm">
+            <a asp-controller="Orders" asp-action="Index"
+               class="btn btn-outline-success w-100 p-3 shadow-sm">
                 <i class="bi bi-list-check d-block mb-2 fs-4"></i> Списък поръчки
             </a>
         </div>
         <div class="col-md-3">
-            <a asp-controller="Manufacturers" asp-action="Index" class="btn btn-outline-info w-100 p-3 shadow-sm">
+            <a asp-controller="Manufacturers" asp-action="Index"
+               class="btn btn-outline-info w-100 p-3 shadow-sm">
                 <i class="bi bi-building d-block mb-2 fs-4"></i> Производители
             </a>
         </div>
         <div class="col-md-3">
-            <a asp-controller="Technologies" asp-action="Index" class="btn btn-outline-secondary w-100 p-3 shadow-sm">
+            <a asp-controller="Technologies" asp-action="Index"
+               class="btn btn-outline-secondary w-100 p-3 shadow-sm">
                 <i class="bi bi-cpu d-block mb-2 fs-4"></i> Технологии
             </a>
         </div>
     </div>
+
+    @* ── СИСТЕМНИ ОПЕРАЦИИ ── *@
     <div class="card border-0 shadow-sm rounded-4 mt-4">
         <div class="card-body p-4">
-            <h5 class="fw-bold mb-3"><i class="bi bi-database-fill-gear me-2"></i> Системни операции</h5>
-            <p class="text-muted small">Внимание: Използвайте бутона за сийдване само ако базата е празна. Бутонът за изтриване ще премахне всички продукти, технологии и производители!</p>
+            <h5 class="fw-bold mb-3">
+                <i class="bi bi-database-fill-gear me-2"></i> Системни операции
+            </h5>
+            <p class="text-muted small">
+                Внимание: Използвайте бутона за сийдване само ако базата е празна.
+                Бутонът за изтриване ще премахне всички продукти, технологии и производители!
+            </p>
 
             <div class="d-flex justify-content-between align-items-center mt-4">
-                <a asp-controller="Home" asp-action="SeedDatabase" class="btn btn-warning rounded-pill px-4 shadow-sm">
+                @* GET заявка — просто навигира към Home/SeedDatabase *@
+                <a asp-controller="Home" asp-action="SeedDatabase"
+                   class="btn btn-warning rounded-pill px-4 shadow-sm">
                     <i class="bi bi-magic me-2"></i> Seed на базата данни
                 </a>
 
-                <form asp-controller="Home" asp-action="ClearDatabase" method="post" onsubmit="return confirm('Сигурни ли сте, че искате да ИЗТРИЕТЕ цялата информация от базата данни? Това действие е необратимо!');">
+                @* POST форма с confirm() диалог — допълнителна защита срещу случайно изтриване *@
+                <form asp-controller="Home" asp-action="ClearDatabase" method="post"
+                      onsubmit="return confirm('Сигурни ли сте, че искате да ИЗТРИЕТЕ цялата информация? Това действие е необратимо!');">
+                    @* AntiForgery token — защита срещу CSRF *@
                     @Html.AntiForgeryToken()
                     <button type="submit" class="btn btn-danger rounded-pill px-4 shadow-sm">
                         <i class="bi bi-trash3-fill me-2"></i> Изчисти базата данни

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace GPUStore.Controllers
 {
-    [Authorize(Roles = "Admin")] // Само админ може да пипа тук
+    [Authorize(Roles = "Admin")]
     public class TechnologiesController : Controller
     {
         private readonly ApplicationDbContext _context;
@@ -16,46 +16,34 @@ namespace GPUStore.Controllers
             _context = context;
         }
 
-        // 1. Списък с всички технологии
+        /// <summary>GET: /Technologies — Списък с всички технологии</summary>
         public IActionResult Index()
         {
             var techs = _context.Technologies.ToList();
             return View(techs);
         }
 
-        // 2. Форма за добавяне (GET)
+        /// <summary>GET: /Technologies/Create — Форма за нова технология</summary>
         public IActionResult Create()
         {
             return View();
         }
 
-        // 3. Записване в базата (POST)
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public IActionResult Create(Technology technology)
-        //{
-        //    if (ModelState.IsValid)
-        //    {
-        //        _context.Technologies.Add(technology);
-        //        _context.SaveChanges();
-        //        return RedirectToAction(nameof(Index));
-        //    }
-        //    return View(technology);
-        //}
+        /// <summary>
+        /// POST: /Technologies/Create
+        /// Проверява за дублиращо наименование.
+        /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create([Bind("Id,Name")] Technology technology)
         {
-            // 1. Проверка за дубликат
             bool exists = await _context.Technologies.AnyAsync(t => t.Name == technology.Name);
 
             if (exists)
             {
-                // Ръчно добавяме грешка към ModelState, която ще се появи под полето Name
                 ModelState.AddModelError("Name", "Тази технология вече съществува в базата.");
             }
 
-            // 2. Стандартната проверка
             if (ModelState.IsValid)
             {
                 _context.Add(technology);
@@ -65,40 +53,26 @@ namespace GPUStore.Controllers
             return View(technology);
         }
 
-        // GET: Technologies/Edit/5
+        /// <summary>GET: /Technologies/Edit/5</summary>
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
-
             var technology = await _context.Technologies.FindAsync(id);
             if (technology == null) return NotFound();
-
             return View(technology);
         }
 
-
-        // POST: Technologies/Edit/5
-        //[HttpPost]
-        //[ValidateAntiForgeryToken]
-        //public async Task<IActionResult> Edit(int id, Technology technology)
-        //{
-        //    if (id != technology.Id) return NotFound();
-
-        //    if (ModelState.IsValid)
-        //    {
-        //        _context.Update(technology);
-        //        await _context.SaveChangesAsync();
-        //        return RedirectToAction(nameof(Index));
-        //    }
-        //    return View(technology);
-        //}
+        /// <summary>
+        /// POST: /Technologies/Edit/5
+        /// Проверка за дубликат с изключение на текущата технология.
+        /// </summary>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Name")] Technology technology)
         {
             if (id != technology.Id) return NotFound();
 
-            // Проверка за дублиране на име
+            // Проверяваме дали съществува ДРУГА технология с СЪЩОТО Name
             bool exists = await _context.Technologies
                 .AnyAsync(m => m.Name == technology.Name && m.Id != id);
 
@@ -116,19 +90,20 @@ namespace GPUStore.Controllers
             return View(technology);
         }
 
-        // GET: Technologies/Delete/5
+        /// <summary>GET: /Technologies/Delete/5</summary>
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null) return NotFound();
-
-            var technology = await _context.Technologies
-                .FirstOrDefaultAsync(m => m.Id == id);
+            var technology = await _context.Technologies.FirstOrDefaultAsync(m => m.Id == id);
             if (technology == null) return NotFound();
-
             return View(technology);
         }
 
-        // POST: Technologies/Delete/5
+        /// <summary>
+        /// POST: /Technologies/Delete/5
+        /// Изтрива технологията.
+        /// ВНИМАНИЕ: Ако технологията е свързана с карти в CardTechnologies — FK error!
+        /// </summary>
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
@@ -143,3 +118,4 @@ namespace GPUStore.Controllers
         }
     }
 }
+

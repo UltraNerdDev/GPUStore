@@ -1,20 +1,42 @@
-﻿@model GPUStore.ViewModels.VideoCardDetailsViewModel
+﻿@* ============================================================
+   Views/VideoCards/UserDetails.cshtml — Детайлна страница на видеокарта
+   ============================================================
+   Модел: VideoCardDetailsViewModel (VideoCard + Comments)
+
+   Секции:
+   1. Breadcrumb навигация
+   2. Основна информация (снимка, цена, технологии, "Добави в количката")
+   3. Описание на продукта
+   4. Коментари + форма за нов коментар (само Клиенти)
+   ============================================================ *@
+@model GPUStore.ViewModels.VideoCardDetailsViewModel
 
 <div class="container mt-5 mb-5 pb-5">
-    @* Добавих mb-5 и pb-5 за разстояние *@
+
+    @* ── BREADCRUMB ── показва текущото местоположение: Каталог > Модел *@
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a asp-action="UserIndex" class="text-decoration-none text-primary">Каталог</a></li>
+            <li class="breadcrumb-item">
+                <a asp-action="UserIndex" class="text-decoration-none text-primary">Каталог</a>
+            </li>
             <li class="breadcrumb-item active">@Model.VideoCard.ModelName</li>
         </ol>
     </nav>
 
+    @* ── ОСНОВНА ИНФОРМАЦИЯ: Снимка (ляво) + Детайли (дясно) ── *@
     <div class="row bg-white shadow-sm rounded-4 overflow-hidden border">
+
+        @* Снимка — лява половина *@
         <div class="col-md-6 p-5 border-end d-flex align-items-center justify-content-center bg-light">
-            <img src="~/images/@Model.VideoCard.ImageUrl" class="img-fluid rounded shadow-sm" style="max-height: 450px;" alt="@Model.VideoCard.ModelName">
+            <img src="~/images/@Model.VideoCard.ImageUrl"
+                 class="img-fluid rounded shadow-sm"
+                 style="max-height: 450px;"
+                 alt="@Model.VideoCard.ModelName" />
         </div>
 
+        @* Детайли — дясна половина *@
         <div class="col-md-6 p-5">
+            @* Badge с производителя (от навигационното свойство Manufacturer) *@
             <span class="badge bg-primary mb-2">@Model.VideoCard.Manufacturer.Name</span>
             <h1 class="display-5 fw-bold text-dark">@Model.VideoCard.ModelName</h1>
 
@@ -23,48 +45,54 @@
                 <span class="text-success small"><i class="bi bi-check-circle-fill"></i> В наличност</span>
             </div>
 
+            @* Технологии — зареждат се от CardTechnologies навигационната колекция *@
             @if (Model.VideoCard.CardTechnologies != null && Model.VideoCard.CardTechnologies.Any())
             {
                 <div class="mb-4">
                     <strong>Поддържани технологии:</strong><br />
                     @foreach (var ct in Model.VideoCard.CardTechnologies)
                     {
+                        @* ct.Technology.Name = навигация CardTechnology → Technology *@
                         <span class="badge border text-dark mt-1">@ct.Technology.Name</span>
                     }
                 </div>
             }
 
-            @if (User.Identity.IsAuthenticated && !User.IsInRole("Admin"))
-            {
-                <form asp-controller="Cart" asp-action="AddToCart" method="post" class="mt-4">
-                    <input type="hidden" name="cardId" value="@Model.VideoCard.Id" />
+            @* ── ФОРМА ЗА ДОБАВЯНЕ В КОЛИЧКАТА ── *@
+            @* enctype НЕ е нужен тук (няма файлове) — стандартна POST форма *@
+            <form asp-controller="Cart" asp-action="AddToCart" method="post" class="mt-4">
+                <input type="hidden" name="cardId" value="@Model.VideoCard.Id" />
 
-                    <div class="d-flex align-items-center mb-4">
-                        <label class="me-3 fw-bold text-dark">Количество:</label>
+                @* Контрол за количество с +/- бутони (JavaScript логика по-долу) *@
+                <div class="d-flex align-items-center mb-4">
+                    <label class="me-3 fw-bold text-dark">Количество:</label>
 
-                        <div class="input-group rounded-pill border overflow-hidden shadow-sm" style="width: 130px;">
-                            <button type="button" class="btn btn-light border-0 px-3" onclick="decrementQty()">
-                                <i class="bi bi-dash-lg"></i>
-                            </button>
+                    <div class="input-group rounded-pill border overflow-hidden shadow-sm" style="width: 130px;">
+                        @* onclick вика JS функция — не изпраща формата *@
+                        <button type="button" class="btn btn-light border-0 px-3" onclick="decrementQty()">
+                            <i class="bi bi-dash-lg"></i>
+                        </button>
 
-                            <input type="number" id="displayQty" name="quantity"
-                                   class="form-control border-0 text-center fw-bold bg-white"
-                                   value="1" min="1" readonly style="box-shadow: none;">
+                        @* readonly — потребителят не може да пише директно, само с бутоните *@
+                        @* name="quantity" — изпраща се заедно с формата към AddToCart *@
+                        <input type="number" id="displayQty" name="quantity"
+                               class="form-control border-0 text-center fw-bold bg-white"
+                               value="1" min="1" readonly style="box-shadow: none;" />
 
-                            <button type="button" class="btn btn-light border-0 px-3" onclick="incrementQty()">
-                                <i class="bi bi-plus-lg"></i>
-                            </button>
-                        </div>
+                        <button type="button" class="btn btn-light border-0 px-3" onclick="incrementQty()">
+                            <i class="bi bi-plus-lg"></i>
+                        </button>
                     </div>
+                </div>
 
-                    <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill shadow-sm py-3 fw-bold">
-                        <i class="bi bi-cart-plus me-2"></i> Добави в количката
-                    </button>
-                </form>
-            }
+                <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill shadow-sm py-3 fw-bold">
+                    <i class="bi bi-cart-plus me-2"></i> Добави в количката
+                </button>
+            </form>
         </div>
     </div>
 
+    @* ── ОПИСАНИЕ НА ПРОДУКТА ── *@
     <div class="row mt-5">
         <div class="col-12">
             <div class="card border-0 shadow-sm rounded-4">
@@ -73,6 +101,9 @@
                     <div class="lh-lg text-secondary">
                         @if (!string.IsNullOrEmpty(Model.VideoCard.Description))
                         {
+                            @* Html.Raw() рендира HTML директно (без escaping).
+                               Replace("\n", "<br />") конвертира нови редове в HTML line breaks.
+                               ВНИМАНИЕ: Html.Raw() е опасен при user input — тук описанието се добавя само от Admin. *@
                             @Html.Raw(Model.VideoCard.Description.Replace("\n", "<br />"))
                         }
                         else
@@ -85,23 +116,36 @@
         </div>
     </div>
 
+    @* ── СЕКЦИЯ С КОМЕНТАРИ ── *@
     <div class="row mt-5">
         <div class="col-lg-8 mx-auto">
-            <h3 class="fw-bold mb-4"><i class="bi bi-chat-left-text me-2"></i> Мнения на потребители (@Model.Comments.Count())</h3>
+            @* Model.Comments.Count() — брои заредените коментари от ViewModel-а *@
+            <h3 class="fw-bold mb-4">
+                <i class="bi bi-chat-left-text me-2"></i>
+                Мнения на потребители (@Model.Comments.Count())
+            </h3>
 
-            @* ПРОВЕРКА: Формата се вижда само ако потребителят НЕ Е админ и е логнат *@
+            @* ── Форма за нов коментар — САМО ЗА КЛИЕНТИ *@
             @if (User.Identity.IsAuthenticated && !User.IsInRole("Admin"))
             {
                 <div class="card border-0 shadow-sm rounded-4 mb-5 bg-light border">
                     <div class="card-body p-4">
                         <h5 class="mb-3 fw-bold">Остави коментар</h5>
-                        <form asp-action="AddComment" method="post">
+                        @* GET форма (не POST) — content и cardId отиват в query string.
+                           VideoCardsController.AddComment(int cardId, string content) ги чете оттам. *@
+                        <form asp-action="AddComment" method="get">
                             <input type="hidden" name="cardId" value="@Model.VideoCard.Id" />
                             <div class="form-group mb-3">
-                                <textarea name="content" class="form-control rounded-3 shadow-none border-1" rows="3" placeholder="Какво мислите за тази карта?" required></textarea>
+                                <textarea name="content"
+                                          class="form-control rounded-3 shadow-none border-1"
+                                          rows="3"
+                                          placeholder="Какво мислите за тази карта?"
+                                          required></textarea>
                             </div>
                             <div class="text-end">
-                                <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">Публикувай</button>
+                                <button type="submit" class="btn btn-primary rounded-pill px-4 shadow-sm">
+                                    Публикувай
+                                </button>
                             </div>
                         </form>
                     </div>
@@ -109,11 +153,13 @@
             }
             else if (User.IsInRole("Admin"))
             {
+                @* Admin вижда информативно съобщение вместо форма *@
                 <div class="alert alert-info rounded-4 border-0 shadow-sm">
                     <i class="bi bi-info-circle me-2"></i> Администраторите не могат да оставят коментари.
                 </div>
             }
 
+            @* ── Списък с коментари ── *@
             <div class="comments-list mt-4">
                 @if (!Model.Comments.Any() && !User.IsInRole("Admin"))
                 {
@@ -127,13 +173,18 @@
                     {
                         <div class="card border-0 shadow-sm rounded-4 mb-3 border-bottom border-primary border-3">
                             <div class="card-body p-4">
+                                @* Хедър: аватар (първа буква от email) + потребителско име + дата *@
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <div class="d-flex align-items-center">
-                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; font-size: 0.8rem;">
+                                        @* Аватар: взима ПЪРВАТА БУКВА от имейла и я показва главна *@
+                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2"
+                                             style="width: 32px; height: 32px; font-size: 0.8rem;">
                                             @comment.User.Email.Substring(0, 1).ToUpper()
                                         </div>
+                                        @* Потребителско "вид-на-username": частта ПРЕДИ @ в имейла *@
                                         <h6 class="fw-bold mb-0 text-dark">@comment.User.Email.Split('@')[0]</h6>
                                     </div>
+                                    @* Дата и час на публикуване *@
                                     <small class="text-muted">@comment.CreatedAt.ToString("dd.MM.yyyy HH:mm")</small>
                                 </div>
                                 <p class="card-text text-secondary mb-0">@comment.Content</p>
@@ -146,49 +197,14 @@
     </div>
 </div>
 
-<style>
-    /* Истинският CSS код за фиксиране на фуутъра */
-    .container {
-        /* Допълнително разстояние в края на контейнера, за да не се застъпва с нищо */
-        margin-bottom: 100px !important;
-    }
-
-    .card {
-        transition: transform 0.2s ease;
-    }
-
-    .comments-list .card:hover {
-        transform: translateX(5px);
-    }
-
-	textarea:focus, input:focus {
-		box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-		border-color: #80bdff;
-	}
-
-    textarea{
-		resize: none;
-    }
-
-    /* Премахва стрелките за Chrome, Safari, Edge, Opera */
-    input::-webkit-outer-spin-button,
-    input::-webkit-inner-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-    }
-
-    /* Премахва стрелките за Firefox */
-    input[type=number] {
-        -moz-appearance: textfield;
-    }
-</style>
-
 <script>
+    /** Увеличава количеството с 1 */
     function incrementQty() {
         let input = document.getElementById('displayQty');
         input.value = parseInt(input.value) + 1;
     }
 
+    /** Намалява количеството с 1 (минимум 1 — не може да стане 0 или отрицателно) */
     function decrementQty() {
         let input = document.getElementById('displayQty');
         let current = parseInt(input.value);

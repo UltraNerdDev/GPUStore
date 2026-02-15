@@ -1,43 +1,70 @@
-﻿@model IEnumerable<GPUStore.Models.VideoCard>
+﻿@* ============================================================
+   Views/VideoCards/UserIndex.cshtml — Клиентски каталог
+   ============================================================
+   Модел: IEnumerable<VideoCard> — списъкът с карти след филтриране.
+
+   Страницата съдържа:
+   1. Форма за търсене/филтриране (GET форма — параметрите са в URL)
+   2. Решетка с карти (Bootstrap card grid)
+   3. "Купи" бутон само за Клиенти (не за Admin)
+   ============================================================ *@
+@model IEnumerable<GPUStore.Models.VideoCard>
 
 <div class="container mt-4">
     <h2 class="fw-bold mb-4 text-dark">Каталог видеокарти</h2>
 
+    @* ── СЕКЦИЯ ЗА ФИЛТРИРАНЕ ── *@
+    @* method="get" — параметрите отиват в URL query string, не в POST body.
+       Например: /VideoCards/UserIndex?searchTerm=RTX&manufacturerId=1
+       Това позволява споделяне на линкове с активни филтри. *@
     <div class="card border-0 shadow-sm rounded-4 mb-5 bg-light">
         <div class="card-body p-4">
             <form method="get" asp-action="UserIndex" class="row g-3 align-items-end">
+
+                @* Поле за търсене по модел *@
                 <div class="col-md-5">
                     <label class="form-label small fw-bold">Търсене</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-search"></i></span>
-                        <input type="text" name="searchTerm" value="@ViewBag.CurrentSearch" class="form-control border-start-0 shadow-none" placeholder="Модел (напр. RTX 4080)...">
-                    </div>
+                    <input type="text" name="searchTerm"
+                           value="@ViewBag.CurrentSearch" @* Запазва текущото търсене при ре-рендиране *@
+                           class="form-control border-start-0 shadow-none"
+                           placeholder="Модел (напр. RTX 4080)..." />
                 </div>
 
+                @* Dropdown за производител.
+                   ViewBag.Manufacturers идва от VideoCardsController.UserIndex() *@
                 <div class="col-md-4">
                     <label class="form-label small fw-bold">Производител</label>
                     <select name="manufacturerId" class="form-select shadow-none">
                         <option value="">Всички марки</option>
                         @foreach (var m in (List<GPUStore.Models.Manufacturer>)ViewBag.Manufacturers)
                         {
-                            <option value="@m.Id" selected="@(ViewBag.CurrentManufacturer != null && (int)ViewBag.CurrentManufacturer == m.Id)">
+                            @* selected="@(...)" — запазва избрания производител при ре-рендиране *@
+                            <option value="@m.Id"
+                                    selected="@(ViewBag.CurrentManufacturer != null && (int)ViewBag.CurrentManufacturer == m.Id)">
                                 @m.Name
                             </option>
                         }
                     </select>
                 </div>
 
+                @* Бутони: Филтрирай (submit) и X (нулиране — линк към UserIndex без параметри) *@
                 <div class="col-md-3 d-flex gap-2">
                     <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold">Филтрирай</button>
-                    <a asp-action="UserIndex" class="btn btn-outline-secondary rounded-pill fw-bold"><i class="bi bi-x-lg"></i></a>
+                    <a asp-action="UserIndex" class="btn btn-outline-secondary rounded-pill fw-bold">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
                 </div>
             </form>
         </div>
     </div>
 
+    @* ── РЕШЕТКА С КАРТИ ── *@
+    @* row-cols-md-3: 3 колони на medium+ екрани, 1 колона на мобилни *@
     <div class="row row-cols-1 row-cols-md-3 g-4">
+
         @if (!Model.Any())
         {
+            @* Ако няма резултати след филтриране — показваме feedback съобщение *@
             <div class="col-12 text-center py-5">
                 <i class="bi bi-emoji-frown display-1 text-muted"></i>
                 <p class="h4 text-muted mt-3">Няма намерени карти по тези критерии.</p>
@@ -48,18 +75,35 @@
             @foreach (var item in Model)
             {
                 <div class="col">
+                    @* transition-up — CSS hover ефект (дефиниран в <style> по-долу) *@
                     <div class="card h-100 border-0 shadow-sm rounded-4 transition-up">
-                        <img src="~/images/@item.ImageUrl" class="card-img-top p-3" alt="..." style="height: 200px; object-fit: contain;">
+
+                        @* Снимка на видеокартата от wwwroot/images/ *@
+                        <img src="~/images/@item.ImageUrl"
+                             class="card-img-top p-3"
+                             alt="@item.ModelName"
+                             style="height: 200px; object-fit: contain;" />
+
                         <div class="card-body d-flex flex-column text-center">
                             <h5 class="card-title fw-bold">@item.ModelName</h5>
                             <p class="text-primary fw-bold h4">@item.Price.ToString("C2")</p>
+
+                            @* mt-auto тласка бутоните към дъното на картата *@
                             <div class="mt-auto pt-3">
-                                <a asp-action="UserDetails" asp-route-id="@item.Id" class="btn btn-outline-primary w-100 rounded-pill mb-2">Детайли</a>
+                                @* Линк към детайлната страница *@
+                                <a asp-action="UserDetails" asp-route-id="@item.Id"
+                                   class="btn btn-outline-primary w-100 rounded-pill mb-2">Детайли</a>
+
+                                @* "Купи" бутон — форма POST към Cart/AddToCart.
+                                   ВИДИМ САМО ЗА КЛИЕНТИ! Admin не може да добавя в количка. *@
                                 <form asp-controller="Cart" asp-action="AddToCart" method="post">
                                     <input type="hidden" name="cardId" value="@item.Id" />
                                     @if (User.Identity.IsAuthenticated && !User.IsInRole("Admin"))
                                     {
-                                        <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold shadow-sm">Купи</button>
+                                        <button type="submit"
+                                                class="btn btn-primary w-100 rounded-pill fw-bold shadow-sm">
+                                            Купи
+                                        </button>
                                     }
                                 </form>
                             </div>
@@ -72,6 +116,7 @@
 </div>
 
 <style>
+    /* Hover ефект: картата се "повдига" при задържане на мишката */
     .transition-up {
         transition: transform 0.2s ease;
     }

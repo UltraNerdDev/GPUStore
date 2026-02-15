@@ -1,56 +1,67 @@
-﻿<!DOCTYPE html>
+﻿@* ============================================================
+   Views/Shared/_Layout.cshtml — Основен шаблон на приложението
+   ============================================================
+   Всички страници наследяват този шаблон.
+   Съдържа:
+   - Навигационна лента (адаптивна по роля)
+   - @RenderBody() — тук се вмъква съдържанието на конкретната страница
+   - Три варианта на footer (Admin / Клиент / Гост)
+   - Скриптове (jQuery, Bootstrap, потребителски JS)
+   ============================================================ *@
+<!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    @* ViewData["Title"] се задава от всяка страница: @{ ViewData["Title"] = "..."; } *@
     <title>@ViewData["Title"] GPUStore</title>
-    <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    @* asp-append-version добавя ?v=hash за cache busting — принуждава браузъра да изтегли нова версия *@
     <link rel="stylesheet" href="~/GPUStore.styles.css" asp-append-version="true" />
+    @* Bootstrap Icons — иконки чрез CSS класове: bi bi-cart3, bi bi-shield-lock и др. *@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="icon" href="~/images/icon.png" />
-    <style>        
-        html,
-        body {height: 100%;}/* Make layout a full-height column so footer sits at the bottom */       
+    <style>
+        /* Flexbox layout за sticky footer (footer стои в дъното дори при малко съдържание) */
+        html, body {
+            height: 100%;
+        }
+
         body {
             display: flex;
-            flex-direction: column; /* ensure no default body margins create gaps */
+            flex-direction: column;
             min-height: 100vh;
-            margin: 0;            
-        }        
-        .container {flex: 1 0 auto;}/* The container that holds the main content should grow to fill available space */
-        footer {flex-shrink: 0;}/* Ensure footer does not shrink and stays at the bottom */        
+            margin: 0;
+        }
+
+        .container {
+            flex: 1 0 auto;
+        }
+        /* Главното съдържание заема оставащото пространство */
+        footer {
+            flex-shrink: 0;
+        }
+        /* Footer не се свива */
     </style>
 </head>
 <body>
     <header>
+        @* Bootstrap navbar — responsive, колапсира на мобилни *@
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container-fluid">
-                <a class="navbar-brand d-flex align-items-center" asp-area="" asp-controller="Home" asp-action="Index">
-                    <img src="~/images/icon.png"
-                         alt="Logo"
-                         width="30"
-                         height="30"
-                         class="d-inline-block align-top me-2">
-                </a>
+                @* Лого + марка — asp-area="" означава root area (не Identity) *@
                 <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">GPUStore</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse"
-                    aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+
+                @* Hamburger бутон за мобилни устройства *@
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse">
                     <span class="navbar-toggler-icon"></span>
                 </button>
+
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
                     <ul class="navbar-nav flex-grow-1">
-                        @*
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                        *@
-                        @* Този линк се вижда от ВСЕКИ логнат потребител *@
+
+                        @* "Каталог" линк — видим за ВСЕКИ логнат потребител (Admin и Клиент) *@
                         @if (User.Identity.IsAuthenticated)
                         {
                             <li class="nav-item">
@@ -59,65 +70,58 @@
                                 </a>
                             </li>
                         }
+
+                        @* "Моите поръчки" и "Количка" — САМО за Клиенти (не Admin) *@
                         @if (!User.IsInRole("Admin") && User.Identity.IsAuthenticated)
                         {
-                            @* ТОВА СЕ ВИЖДА САМО ОТ КЛИЕНТИ *@
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="Orders" asp-action="MyOrders">Моите поръчки</a>
                             </li>
-
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-controller="Cart" asp-action="Index">
                                     <i class="bi bi-cart3"></i> Количка
                                 </a>
                             </li>
                         }
+
+                        @* "Админ Панел" dropdown — САМО за Admin *@
                         @if (User.Identity.IsAuthenticated && User.IsInRole("Admin"))
                         {
                             <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle text-primary fw-bold" href="#" id="adminDropdown"
-                                    role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                @* data-bs-toggle="dropdown" — Bootstrap JavaScript активира dropdown *@
+                                <a class="nav-link dropdown-toggle text-primary fw-bold" href="#"
+                                   id="adminDropdown" role="button" data-bs-toggle="dropdown">
                                     <i class="bi bi-shield-lock"></i> Админ Панел
                                 </a>
                                 <ul class="dropdown-menu shadow" aria-labelledby="adminDropdown">
-                                    <li>
-                                        <a class="dropdown-item" asp-controller="VideoCards" asp-action="Index">
-                                            <i class="bi bi-cpu"></i> Видеокарти
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" asp-controller="Manufacturers" asp-action="Index">
-                                            <i class="bi bi-building"></i> Производители
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" asp-controller="Technologies" asp-action="Index">
-                                            <i class="bi bi-gear"></i> Технологии
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" asp-controller="Orders" asp-action="Index">
-                                            <i class="bi bi-cart-check"></i> Поръчки
-                                        </a>
-                                    </li>
+                                    <li><a class="dropdown-item" asp-controller="VideoCards" asp-action="Index">Видеокарти</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Manufacturers" asp-action="Index">Производители</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Technologies" asp-action="Index">Технологии</a></li>
+                                    <li><a class="dropdown-item" asp-controller="Orders" asp-action="Index">Поръчки</a></li>
                                 </ul>
                             </li>
                         }
                     </ul>
+
+                    @* Partial view с Login/Logout бутоните (вдясно в navbar) *@
                     <partial name="_LoginPartial" />
                 </div>
             </div>
         </nav>
     </header>
+
+    @* @RenderBody() — тук ASP.NET Core вмъква HTML-а на конкретната страница *@
     <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
 
+    @* ── FOOTER — три варианта спрямо ролята ── *@
+
     @if (User.Identity.IsAuthenticated && User.IsInRole("Admin"))
     {
-        @* mt-auto избутва фуутъра надолу, а py-3 добавя малко вътрешно разстояние *@
+        @* Admin footer: минималистичен, само авторски права и "Admin Mode" индикатор *@
         <footer class="border-top bg-light py-3 mt-auto">
             <div class="container-fluid px-4">
                 <div class="d-flex align-items-center justify-content-between small text-muted">
@@ -129,63 +133,32 @@
     }
     else if (User.Identity.IsAuthenticated && !User.IsInRole("Admin"))
     {
+        @* Клиентски footer: dark тема с описание, бързи линкове, контакти, социални мрежи *@
         <footer class="bg-dark text-white pt-5 pb-4">
             <div class="container text-center text-md-start">
+                @* ... footer съдържание ... *@
                 <div class="row text-center text-md-start">
-
-                    <div class="col-md-3 col-lg-3 col-xl-3 mx-auto mt-3">
-                        <h5 class="text-uppercase mb-4 font-weight-bold text-primary">GPU Store</h5>
-                        <p class="small">
-                            Твоят доверен партньор в света на графичните технологии. Най-новите карти от NVIDIA и AMD на
-                            конкурентни цени.
-                        </p>
+                    <div class="col-md-3 mx-auto mt-3">
+                        <h5 class="text-uppercase mb-4 text-primary">GPU Store</h5>
+                        <p class="small">Твоят доверен партньор в света на графичните технологии.</p>
                     </div>
-
-                    <div class="col-md-2 col-lg-2 col-xl-2 mx-auto mt-3">
-                        <h5 class="text-uppercase mb-4 font-weight-bold text-primary">Линкове</h5>
-                        <p><a asp-controller="VideoCards" asp-action="UserIndex" class="text-white text-decoration-none small">Каталог</a>
-                        </p>
-                        <p><a asp-controller="Orders" asp-action="MyOrders" class="text-white text-decoration-none small">Моите
-                            поръчки</a></p>
-                        <p><a asp-controller="Cart" asp-action="Index" class="text-white text-decoration-none small">Количка</a>
-                        </p>
+                    <div class="col-md-2 mx-auto mt-3">
+                        <h5 class="text-uppercase mb-4 text-primary">Линкове</h5>
+                        <p><a asp-controller="VideoCards" asp-action="UserIndex" class="text-white text-decoration-none small">Каталог</a></p>
+                        <p><a asp-controller="Orders" asp-action="MyOrders" class="text-white text-decoration-none small">Моите поръчки</a></p>
+                        <p><a asp-controller="Cart" asp-action="Index" class="text-white text-decoration-none small">Количка</a></p>
                     </div>
-
-                    <div class="col-md-4 col-lg-3 col-xl-3 mx-auto mt-3">
-                        <h5 class="text-uppercase mb-4 font-weight-bold text-primary">Контакти</h5>
+                    <div class="col-md-4 mx-auto mt-3">
+                        <h5 class="text-uppercase mb-4 text-primary">Контакти</h5>
                         <p class="small"><i class="bi bi-house-door-fill me-2"></i> София, България</p>
                         <p class="small"><i class="bi bi-envelope-fill me-2"></i> support@gpustore.bg</p>
                         <p class="small"><i class="bi bi-telephone-fill me-2"></i> +359 888 123 456</p>
                     </div>
-
                 </div>
-
                 <hr class="mb-4">
-
                 <div class="row align-items-center">
-                    <div class="col-md-7 col-lg-8">
-                        <p class="small">
-                            © @DateTime.Now.Year Всички права запазени:
-                            <strong class="text-primary">GPU Store Ltd.</strong>
-                        </p>
-                    </div>
-                    <div class="col-md-5 col-lg-4">
-                        <div class="text-center text-md-end">
-                            <ul class="list-unstyled list-inline">
-                                <li class="list-inline-item">
-                                    <a href="#" class="btn-floating btn-sm text-white" style="font-size: 23px;"><i
-                                        class="bi bi-facebook"></i></a>
-                                </li>
-                                <li class="list-inline-item">
-                                    <a href="#" class="btn-floating btn-sm text-white" style="font-size: 23px;"><i
-                                        class="bi bi-instagram"></i></a>
-                                </li>
-                                <li class="list-inline-item">
-                                    <a href="#" class="btn-floating btn-sm text-white" style="font-size: 23px;"><i
-                                        class="bi bi-discord"></i></a>
-                                </li>
-                            </ul>
-                        </div>
+                    <div class="col-md-7">
+                        <p class="small">© @DateTime.Now.Year Всички права запазени: <strong class="text-primary">GPU Store Ltd.</strong></p>
                     </div>
                 </div>
             </div>
@@ -193,6 +166,7 @@
     }
     else
     {
+        @* Гост footer: минималистичен (за нелогнати посетители) *@
         <footer class="border-top footer text-muted bg-light">
             <div class="text-center">
                 &copy; @DateTime.Now.Year - GPU Store - Всички права запазени.
@@ -200,10 +174,11 @@
         </footer>
     }
 
+    @* ── СКРИПТОВЕ (зареждат се в края на body за по-бърза страница) ── *@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    @* @RenderSectionAsync("Scripts") — позволява отделните изгледи да добавят свои скриптове *@
     @await RenderSectionAsync("Scripts", required: false)
 </body>
-
 </html>

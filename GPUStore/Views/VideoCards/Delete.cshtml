@@ -1,20 +1,26 @@
-﻿@model GPUStore.Models.VideoCard
-@*<h3>Сигурни ли сте, че искате да изтриете @Model.ModelName?</h3>
-<form asp-action="Delete">
-    <input type="hidden" asp-for="Id" />
-    <input type="submit" value="Изтрий" class="btn btn-danger" />
-    <a asp-action="Index" class="btn btn-secondary">Отказ</a>
-</form>*@
+﻿@* ============================================================
+   Views/VideoCards/Delete.cshtml — Потвърждение за изтриване (Admin)
+   ============================================================
+   Модел: VideoCard — показва данните на картата преди изтриване.
+   Без [ValidateAntiForgeryToken] по GET — формата го добавя автоматично.
+   ============================================================ *@
+@model GPUStore.Models.VideoCard
+
 <div class="container mt-5">
     <div class="row">
         <div class="col-md-6 offset-md-3">
             <div class="card border-danger shadow">
                 <div class="card-header bg-danger text-white">
-                    <h4 class="mb-0">Изтриване на технология</h4>
+                    <h4 class="mb-0">Изтриване на видеокарта</h4>
                 </div>
                 <div class="card-body bg-danger-subtle">
                     <p class="lead">Сигурни ли сте, че искате да изтриете <strong>@Model.ModelName</strong>?</p>
-                    <p class="text-muted small">Забележка: Това ще премахне видеокартата от базата данни.</p>
+                    <p class="text-muted small">
+                        Забележка: Това ще премахне видеокартата от базата данни.
+                    </p>
+                    @* GET форма — DeleteConfirmed е POST метод с ActionName("Delete"),
+                       но тук формата е GET (без method="post") — работи защото ASP.NET
+                       използва формата за POST submit. *@
                     <form asp-action="Delete">
                         <input type="hidden" asp-for="Id" />
                         <div class="d-flex justify-content-between mt-4">

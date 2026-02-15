@@ -1,4 +1,10 @@
-﻿@model GPUStore.Models.Manufacturer
+﻿@* ============================================================
+   Views/Manufacturers/Create.cshtml — Нов производител (Admin)
+   ============================================================
+   Модел: Manufacturer — само Name полето е нужно (Id се генерира от DB).
+   asp-validation-summary и asp-validation-for показват ModelState грешки.
+   ============================================================ *@
+@model GPUStore.Models.Manufacturer
 
 <div class="container">
     <div class="row">
@@ -14,13 +20,12 @@
                         <div class="form-group mb-3">
                             <label asp-for="Name" class="control-label font-weight-bold">Име на марката</label>
                             <input asp-for="Name" class="form-control" placeholder="напр. NVIDIA, ASUS, MSI..." />
+                            @* asp-validation-for показва конкретната ModelState грешка за Name *@
                             <span asp-validation-for="Name" class="text-danger"></span>
                         </div>
 
                         <div class="form-group d-flex justify-content-between">
-                            <button type="submit" class="btn btn-success">
-                                <i class="fas fa-save"></i> Запази
-                            </button>
+                            <button type="submit" class="btn btn-success">Запази</button>
                             <a asp-action="Index" class="btn btn-secondary">Назад към списъка</a>
                         </div>
                     </form>

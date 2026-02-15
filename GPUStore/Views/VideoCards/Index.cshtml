@@ -1,8 +1,15 @@
-﻿@model IEnumerable<GPUStore.Models.VideoCard>
+﻿@* ============================================================
+   Views/VideoCards/Index.cshtml — Admin таблица с видеокарти
+   ============================================================
+   Модел: IEnumerable<VideoCard> — всички карти с Manufacturer и Technologies.
+   Показва Admin CRUD таблица с бутони Редактирай/Изтрий.
+   ============================================================ *@
+@model IEnumerable<GPUStore.Models.VideoCard>
 
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mt-4 mb-4">
         <h1>Списък с Видеокарти (Админ)</h1>
+        @* Бутон за добавяне на нова карта → VideoCards/Create *@
         <a asp-action="Create" class="btn btn-success">Добави Нова Карта</a>
     </div>
 
@@ -12,7 +19,7 @@
                 <th>Икона</th>
                 <th>Модел</th>
                 <th>Производител</th>
-                <th>Технологии</th> @* Нова колона *@
+                <th>Технологии</th>
                 <th>Цена</th>
                 <th>Действия</th>
             </tr>
@@ -22,24 +29,25 @@
             {
                 <tr>
                     <td>
+                        @* Снимката се зарежда само ако ImageUrl не е null *@
                         @if (!string.IsNullOrEmpty(item.ImageUrl))
                         {
-                            <img src="~/images/@item.ImageUrl" alt="GPU" style="width: 50px; height: auto; margin-right: 10px;" class="img-thumbnail" />
+                            <img src="~/images/@item.ImageUrl" alt="GPU"
+                                 style="width: 50px; height: auto;" class="img-thumbnail" />
                         }
-                        
                     </td>
+                    <td><strong>@item.ModelName</strong></td>
+
+                    @* Manufacturer?.Name — null-conditional: ако Manufacturer е null, показва нищо *@
+                    <td>@item.Manufacturer?.Name</td>
+
                     <td>
-                        <strong>@item.ModelName</strong>
-                    </td>
-                    <td>
-                        @item.Manufacturer?.Name
-                    </td>
-                    <td>
-                        @* Обхождаме технологиите на конкретната карта *@
+                        @* CardTechnologies е навигационна колекция — зарежда се с ThenInclude в контролера *@
                         @if (item.CardTechnologies != null && item.CardTechnologies.Any())
                         {
                             @foreach (var ct in item.CardTechnologies)
                             {
+                                @* ct.Technology?.Name — null-conditional за безопасност *@
                                 <span class="badge bg-info text-dark me-1">@ct.Technology?.Name</span>
                             }
                         }
@@ -48,10 +56,12 @@
                             <span class="text-muted small">Няма</span>
                         }
                     </td>
+
+                    @* ToString("C2") = валутен формат с 2 десетични (напр. "1 200,00 лв.") *@
+                    <td>@item.Price.ToString("C2")</td>
+
                     <td>
-                        @item.Price.ToString("C2")
-                    </td>
-                    <td>
+                        @* asp-route-id генерира /VideoCards/Edit/5 *@
                         <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary">Редактирай</a>
                         <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">Изтрий</a>
                     </td>
